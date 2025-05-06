@@ -29,146 +29,6 @@ $products_result = $conn->query($products_sql);
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .admin-btn {
-            background: var(--accent-color);
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border-radius: 25px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all var(--transition-speed);
-            font-weight: 500;
-        }
-
-        .admin-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--hover-shadow);
-        }
-
-        @media (max-width: 768px) {
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .admin-btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Update cart container styles */
-        .cart-container {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: var(--card-shadow);
-            position: sticky;
-            top: 2rem;
-            max-height: calc(100vh - 4rem);
-            overflow-y: auto;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
-            opacity: 0.95;
-            backdrop-filter: blur(10px);
-        }
-
-        /* Mobile Cart Styles */
-        @media (max-width: 1023px) {
-            .cart-container {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                top: auto;
-                max-height: 60vh; /* Reduced from 80vh */
-                border-radius: 15px 15px 0 0;
-                z-index: 1000;
-                transform: translateY(100%);
-                transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                padding-bottom: 60px; /* Reduced from 80px */
-            }
-
-            .cart-container.expanded {
-                transform: translateY(0);
-            }
-
-            /* Update cart toggle button */
-            .cart-toggle {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: rgba(255, 255, 255, 0.95);
-                padding: 0.8rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-                z-index: 1001;
-                backdrop-filter: blur(10px);
-            }
-
-            .view-cart-btn {
-                background: var(--accent-color);
-                color: white;
-                border: none;
-                padding: 0.6rem 1.2rem;
-                border-radius: 25px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                font-weight: 500;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Update main grid layout */
-        @media (min-width: 1024px) {
-            main {
-                grid-template-columns: 1fr 2fr 1fr;
-                gap: 1.5rem;
-            }
-
-            .products-section {
-                grid-column: 1 / -2; /* Make products section wider */
-            }
-
-            .cart-container {
-                grid-column: -2 / -1;
-            }
-        }
-
-        /* Add semi-transparent overlay when cart is open on mobile */
-        .cart-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .cart-overlay.active {
-            display: block;
-            opacity: 1;
-        }
-    </style>
 </head>
 <body>
     <div class="dashboard-container">
@@ -284,9 +144,6 @@ $products_result = $conn->query($products_sql);
             </div>
         </div>
     </div>
-
-    <!-- Add overlay div -->
-    <div class="cart-overlay" id="cart-overlay"></div>
 
     <script>
         let cart = [];
@@ -520,21 +377,11 @@ $products_result = $conn->query($products_sql);
             printWindow.close();
         }
 
-        // Update toggle cart function
+        // Mobile cart toggle functionality
         function toggleCart() {
             const cartContainer = document.querySelector('.cart-container');
-            const overlay = document.getElementById('cart-overlay');
             cartContainer.classList.toggle('expanded');
-            overlay.classList.toggle('active');
         }
-
-        // Close cart when clicking overlay
-        document.getElementById('cart-overlay').addEventListener('click', function() {
-            const cartContainer = document.querySelector('.cart-container');
-            if (cartContainer.classList.contains('expanded')) {
-                toggleCart();
-            }
-        });
 
         // Close cart when clicking outside on mobile
         document.addEventListener('click', function(event) {

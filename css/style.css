@@ -123,6 +123,12 @@ header:hover {
     transform: translateY(-2px);
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .cart-summary {
     background: rgba(255, 255, 255, 0.2);
     padding: 0.8rem 1.5rem;
@@ -135,6 +141,25 @@ header:hover {
 
 .cart-summary:hover {
     transform: scale(1.05);
+}
+
+.admin-btn {
+    background: var(--accent-color);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-speed);
+    font-weight: 500;
+}
+
+.admin-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--hover-shadow);
+    color: white;
 }
 
 main {
@@ -898,6 +923,16 @@ main {
     .add-to-cart-btn {
         padding: 0.6rem;
         font-size: 0.9rem;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .admin-btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
