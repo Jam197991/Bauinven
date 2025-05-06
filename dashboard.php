@@ -33,7 +33,13 @@ $products_result = $conn->query($products_sql);
 <body>
     <div class="dashboard-container">
         <header>
-            <h1><i class="fas fa-leaf"></i> BauApp Ordering System</h1>
+            <div class="header-top">
+                <h1><i class="fas fa-leaf"></i> BauApp Ordering System</h1>
+                <a href="index.php" class="logout-btn">
+                    <i class="fas fa-power-off"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
             <div class="header-actions">
                 <div class="cart-summary">
                     <i class="fas fa-shopping-cart"></i>
