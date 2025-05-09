@@ -16,6 +16,27 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCart();
     handleResponsiveLayout();
     initializeResponsiveFeatures();
+    initializeMobileFeatures();
+
+    // Add touch event listeners for cart swipe
+    let touchStartY = 0;
+    let touchEndY = 0;
+    const cartContainer = document.querySelector('.cart-container');
+
+    if (cartContainer) {
+        cartContainer.addEventListener('touchstart', function(e) {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        cartContainer.addEventListener('touchend', function(e) {
+            touchEndY = e.changedTouches[0].clientY;
+            const swipeDistance = touchEndY - touchStartY;
+            
+            if (swipeDistance > 100 && cartContainer.classList.contains('expanded')) {
+                toggleCart();
+            }
+        }, { passive: true });
+    }
 });
 
 // Save cart to localStorage whenever it changes
@@ -52,10 +73,23 @@ function addToCart(id, name, price) {
     } else {
         cart.push({ id, name, price, quantity });
     }
+    
     quantities[id] = 0;
     updateQuantityDisplay(id);
     updateCart();
     saveCart();
+    
+    // Show cart after adding item
+    const cartContainer = document.querySelector('.cart-container');
+    if (cartContainer && window.innerWidth <= 1023) {
+        cartContainer.classList.add('expanded');
+        // Animate new items
+        const cartItems = cartContainer.querySelectorAll('.cart-item');
+        cartItems.forEach((item, index) => {
+            item.style.animationDelay = `${index * 0.1}s`;
+        });
+    }
+    
     showNotification(`${name} added to cart`);
 }
 
@@ -64,6 +98,7 @@ function removeFromCart(id) {
     cart = cart.filter(item => item.id !== id);
     updateCart();
     saveCart();
+    
     if (item) {
         showNotification(`${item.name} removed from cart`);
     }
@@ -76,6 +111,10 @@ function updateCart() {
     const totalAmount = document.getElementById('total-amount');
     const mobileCartCount = document.getElementById('mobile-cart-count');
     const mobileCartTotal = document.getElementById('mobile-cart-total');
+    const cartContainer = document.querySelector('.cart-container');
+    const cartToggle = document.querySelector('.cart-toggle');
+    
+    if (!cartItems) return;
     
     cartItems.innerHTML = '';
     let total = 0;
@@ -94,17 +133,35 @@ function updateCart() {
                 </div>
                 <div class="cart-item-actions">
                     <span class="item-price">₱${itemTotal.toFixed(2)}</span>
-                    <button onclick="removeFromCart(${item.id})" class="remove-btn">×</button>
+                    <button onclick="removeFromCart(${item.id})" class="remove-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
         `;
     });
 
-    cartCount.textContent = count;
-    cartTotal.textContent = `₱${total.toFixed(2)}`;
-    totalAmount.textContent = `₱${total.toFixed(2)}`;
-    mobileCartCount.textContent = count;
-    mobileCartTotal.textContent = `₱${total.toFixed(2)}`;
+    // Update all cart counters and totals
+    [cartCount, mobileCartCount].forEach(el => {
+        if (el) el.textContent = count;
+    });
+    
+    [cartTotal, mobileCartTotal, totalAmount].forEach(el => {
+        if (el) el.textContent = `₱${total.toFixed(2)}`;
+    });
+
+    // Show/hide cart toggle based on cart content
+    if (cartToggle) {
+        cartToggle.style.display = count > 0 ? 'flex' : 'none';
+    }
+
+    // Update cart container visibility
+    if (cartContainer) {
+        cartContainer.style.display = count > 0 ? 'block' : 'none';
+    }
+
+    // Save cart to localStorage
+    saveCart();
 }
 
 function checkout() {
@@ -226,10 +283,45 @@ function printReceipt() {
     printWindow.close();
 }
 
-// Mobile cart toggle functionality
+// Enhanced Cart Functionality
 function toggleCart() {
     const cartContainer = document.querySelector('.cart-container');
-    cartContainer.classList.toggle('expanded');
+    
+    if (cartContainer) {
+        cartContainer.classList.toggle('expanded');
+        
+        // Update button text
+        const viewCartBtn = document.querySelector('.view-cart-btn');
+        if (viewCartBtn) {
+            viewCartBtn.innerHTML = cartContainer.classList.contains('expanded') 
+                ? '<i class="fas fa-times"></i> Close Cart' 
+                : '<i class="fas fa-shopping-cart"></i> View Cart';
+        }
+        
+        // Prevent body scroll when cart is open
+        document.body.style.overflow = cartContainer.classList.contains('expanded') ? 'hidden' : '';
+        
+        // Add haptic feedback
+        if ('vibrate' in navigator) {
+            navigator.vibrate(50);
+        }
+
+        // Animate cart items
+        if (cartContainer.classList.contains('expanded')) {
+            const cartItems = cartContainer.querySelectorAll('.cart-item');
+            cartItems.forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    item.style.transition = 'all 0.3s ease-out';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        }
+    }
 }
 
 // Responsive Enhancements
@@ -365,16 +457,16 @@ window.addEventListener('resize', function() {
     }, 250);
 });
 
-// Close cart when clicking outside on mobile
+// Close cart when clicking outside
 document.addEventListener('click', function(event) {
     const cartContainer = document.querySelector('.cart-container');
     const cartToggle = document.querySelector('.cart-toggle');
     
-    if (window.innerWidth <= 1023 && 
+    if (cartContainer && cartToggle && 
         !cartContainer.contains(event.target) && 
         !cartToggle.contains(event.target) &&
         cartContainer.classList.contains('expanded')) {
-        cartContainer.classList.remove('expanded');
+        toggleCart();
     }
 });
 
@@ -405,7 +497,117 @@ function scrollToTop() {
     });
 }
 
-// Add notification
+// Enhanced Mobile Interactions
+function initializeMobileFeatures() {
+    // Add pull-to-refresh functionality
+    let touchStartY = 0;
+    let touchEndY = 0;
+    const pullThreshold = 100;
+    
+    document.addEventListener('touchstart', function(e) {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    document.addEventListener('touchend', function(e) {
+        touchEndY = e.changedTouches[0].clientY;
+        const pullDistance = touchStartY - touchEndY;
+        
+        if (pullDistance > pullThreshold && window.scrollY === 0) {
+            refreshContent();
+        }
+    }, { passive: true });
+
+    // Handle cart swipe gestures
+    let cartStartX = 0;
+    let cartEndX = 0;
+
+    document.addEventListener('touchstart', function(e) {
+        const cartContainer = document.querySelector('.cart-container');
+        if (cartContainer && cartContainer.classList.contains('expanded')) {
+            cartStartX = e.touches[0].clientX;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+        const cartContainer = document.querySelector('.cart-container');
+        if (cartContainer && cartContainer.classList.contains('expanded')) {
+            cartEndX = e.changedTouches[0].clientX;
+            const swipeDistance = cartStartX - cartEndX;
+            
+            if (swipeDistance > 50) {
+                toggleCart();
+            }
+        }
+    }, { passive: true });
+
+    // Add haptic feedback
+    function vibrateDevice() {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(50);
+        }
+    }
+
+    // Add haptic feedback to buttons
+    document.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', vibrateDevice);
+    });
+
+    // Add double-tap to zoom for product images
+    document.querySelectorAll('.product-card img').forEach(img => {
+        let lastTap = 0;
+        img.addEventListener('click', function(e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                e.preventDefault();
+                if (img.style.transform === 'scale(1.5)') {
+                    img.style.transform = 'scale(1)';
+                } else {
+                    img.style.transform = 'scale(1.5)';
+                }
+            }
+            lastTap = currentTime;
+        });
+    });
+
+    // Add loading states
+    function showLoading(element) {
+        element.classList.add('loading-skeleton');
+        element.style.pointerEvents = 'none';
+    }
+
+    function hideLoading(element) {
+        element.classList.remove('loading-skeleton');
+        element.style.pointerEvents = 'auto';
+    }
+
+    // Enhanced touch feedback
+    document.querySelectorAll('.product-card, .category-card, button').forEach(element => {
+        element.addEventListener('touchstart', function() {
+            this.style.transform = 'scale(0.98)';
+        }, { passive: true });
+        
+        element.addEventListener('touchend', function() {
+            this.style.transform = '';
+        }, { passive: true });
+    });
+}
+
+// Refresh content function
+function refreshContent() {
+    const productsGrid = document.querySelector('.products-grid');
+    if (productsGrid) {
+        showLoading(productsGrid);
+        // Simulate content refresh
+        setTimeout(() => {
+            hideLoading(productsGrid);
+            showNotification('Content refreshed', 'success');
+        }, 1000);
+    }
+}
+
+// Enhanced notification system
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -413,9 +615,23 @@ function showNotification(message, type = 'success') {
         <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
         ${message}
     `;
+    
+    // Remove existing notifications
+    document.querySelectorAll('.notification').forEach(n => n.remove());
+    
     document.body.appendChild(notification);
+    
+    // Add entrance animation
+    notification.style.animation = 'slideIn 0.3s ease-out';
+    
+    // Vibrate on notification
+    if ('vibrate' in navigator) {
+        navigator.vibrate(100);
+    }
+    
     setTimeout(() => {
-        notification.remove();
+        notification.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
