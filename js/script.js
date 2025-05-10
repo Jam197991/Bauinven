@@ -219,6 +219,178 @@ function checkout() {
     showReceipt();
 }
 
+// Advanced Animation System
+const AnimationSystem = {
+    // Easing functions for smoother animations
+    easings: {
+        easeOutExpo: t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
+        easeOutBack: t => {
+            const c1 = 1.70158;
+            const c3 = c1 + 1;
+            return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+        },
+        easeOutElastic: t => {
+            const c4 = (2 * Math.PI) / 3;
+            return t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
+        },
+        easeOutBounce: t => {
+            const n1 = 7.5625;
+            const d1 = 2.75;
+            if (t < 1 / d1) return n1 * t * t;
+            if (t < 2 / d1) return n1 * (t -= 1.5 / d1) * t + 0.75;
+            if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + 0.9375;
+            return n1 * (t -= 2.625 / d1) * t + 0.984375;
+        }
+    },
+
+    // Advanced animation function with multiple properties and easing
+    animate(element, properties, options = {}) {
+        const {
+            duration = 500,
+            easing = 'easeOutExpo',
+            delay = 0,
+            onComplete = () => {}
+        } = options;
+
+        const startTime = performance.now();
+        const startProps = {};
+        const endProps = {};
+        const easingFn = this.easings[easing] || this.easings.easeOutExpo;
+
+        // Get start values and prepare end values
+        for (const prop in properties) {
+            const computedStyle = getComputedStyle(element);
+            startProps[prop] = parseFloat(computedStyle[prop]) || 0;
+            endProps[prop] = properties[prop];
+        }
+
+        // Animation frame function
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime - delay;
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = easingFn(progress);
+
+            // Apply properties with easing
+            for (const prop in properties) {
+                const value = startProps[prop] + (endProps[prop] - startProps[prop]) * easedProgress;
+                element.style[prop] = value + (prop === 'opacity' ? '' : 'px');
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                onComplete();
+            }
+        };
+
+        // Start animation after delay
+        if (delay > 0) {
+            setTimeout(() => requestAnimationFrame(animate), delay);
+        } else {
+            requestAnimationFrame(animate);
+        }
+    },
+
+    // Staggered animation for multiple elements
+    stagger(elements, properties, options = {}) {
+        const {
+            staggerDelay = 50,
+            ...animationOptions
+        } = options;
+
+        elements.forEach((element, index) => {
+            this.animate(element, properties, {
+                ...animationOptions,
+                delay: index * staggerDelay
+            });
+        });
+    },
+
+    // Fade in with transform
+    fadeIn(element, options = {}) {
+        const {
+            duration = 400,
+            transform = 'translateY(20px)',
+            ...rest
+        } = options;
+
+        element.style.opacity = '0';
+        element.style.transform = transform;
+        element.style.transition = 'none';
+
+        requestAnimationFrame(() => {
+            this.animate(element, {
+                opacity: 1,
+                transform: 'translateY(0)'
+            }, {
+                duration,
+                ...rest
+            });
+        });
+    },
+
+    // Fade out with transform
+    fadeOut(element, options = {}) {
+        const {
+            duration = 400,
+            transform = 'translateY(-20px)',
+            onComplete = () => {},
+            ...rest
+        } = options;
+
+        this.animate(element, {
+            opacity: 0,
+            transform
+        }, {
+            duration,
+            onComplete,
+            ...rest
+        });
+    }
+};
+
+// Enhanced notification system with smoother animations
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        ${message}
+    `;
+    
+    // Remove existing notifications with fade out
+    document.querySelectorAll('.notification').forEach(n => {
+        AnimationSystem.fadeOut(n, {
+            duration: 200,
+            onComplete: () => n.remove()
+        });
+    });
+    
+    document.body.appendChild(notification);
+    
+    // Enhanced entrance animation
+    AnimationSystem.fadeIn(notification, {
+        duration: 300,
+        easing: 'easeOutBack',
+        transform: 'translateX(100%) scale(0.8)'
+    });
+    
+    // Vibrate with optimized pattern
+    if ('vibrate' in navigator) {
+        navigator.vibrate([30, 20, 30]);
+    }
+    
+    setTimeout(() => {
+        AnimationSystem.fadeOut(notification, {
+            duration: 300,
+            easing: 'easeOutExpo',
+            transform: 'translateX(100%) scale(0.95)',
+            onComplete: () => notification.remove()
+        });
+    }, 2500);
+}
+
+// Enhanced receipt display with smoother animations
 function showReceipt() {
     const modal = document.getElementById('receipt-modal');
     const receiptItems = document.querySelector('.receipt-items');
@@ -231,24 +403,41 @@ function showReceipt() {
     receiptDate.textContent = now.toLocaleDateString();
     receiptTime.textContent = now.toLocaleTimeString();
 
-    // Generate receipt items
+    // Generate receipt items with enhanced staggered animation
     let total = 0;
     receiptItems.innerHTML = '';
     
-    cart.forEach(item => {
+    const receiptElements = [];
+    cart.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
         
-        receiptItems.innerHTML += `
-            <div class="receipt-item">
-                <span class="item-name">${item.name}</span>
-                <span class="item-quantity">${item.quantity}</span>
-                <span class="item-price">₱${itemTotal.toFixed(2)}</span>
-            </div>
+        const receiptItem = document.createElement('div');
+        receiptItem.className = 'receipt-item';
+        receiptItem.style.opacity = '0';
+        receiptItem.style.transform = 'translateY(20px)';
+        
+        receiptItem.innerHTML = `
+            <span class="item-name">${item.name}</span>
+            <span class="item-quantity">${item.quantity}</span>
+            <span class="item-price">₱${itemTotal.toFixed(2)}</span>
         `;
+        
+        receiptItems.appendChild(receiptItem);
+        receiptElements.push(receiptItem);
     });
 
-    // Add total
+    // Enhanced staggered animation for receipt items
+    AnimationSystem.stagger(receiptElements, {
+        opacity: 1,
+        transform: 'translateY(0)'
+    }, {
+        duration: 300,
+        easing: 'easeOutBack',
+        staggerDelay: 50
+    });
+
+    // Add total with enhanced animation
     receiptTotal.innerHTML = `
         <div class="receipt-total-row">
             <span>Total Amount:</span>
@@ -256,50 +445,18 @@ function showReceipt() {
         </div>
     `;
 
-    // Show modal
+    // Enhanced modal animation
     modal.style.display = 'flex';
-}
-
-function closeReceipt() {
-    const modal = document.getElementById('receipt-modal');
-    modal.style.display = 'none';
-}
-
-function printReceipt() {
-    const receiptContent = document.querySelector('.receipt').innerHTML;
-    const printWindow = window.open('', '', 'height=600,width=800');
+    modal.style.opacity = '0';
     
-    printWindow.document.write(`
-        <html>
-            <head>
-                <title>BauApp Receipt</title>
-                <style>
-                    body { font-family: monospace; }
-                    .receipt { width: 300px; margin: 0 auto; }
-                    .receipt-header { text-align: center; margin-bottom: 20px; }
-                    .receipt-item { display: flex; justify-content: space-between; margin: 5px 0; }
-                    .receipt-total-row { display: flex; justify-content: space-between; margin-top: 20px; font-weight: bold; }
-                    .receipt-footer { text-align: center; margin-top: 20px; }
-                    @media print {
-                        body { margin: 0; padding: 20px; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="receipt">
-                    ${receiptContent}
-                </div>
-            </body>
-        </html>
-    `);
-    
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+    AnimationSystem.fadeIn(modal, {
+        duration: 400,
+        easing: 'easeOutBack',
+        transform: 'scale(0.95)'
+    });
 }
 
-// Enhanced Cart Functionality
+// Enhanced cart toggle with smoother animations
 function toggleCart() {
     const cartContainer = document.querySelector('.cart-container');
     const mainContent = document.querySelector('main');
@@ -310,25 +467,37 @@ function toggleCart() {
     }
 
     if (cartContainer) {
+        const isExpanding = !cartContainer.classList.contains('expanded');
+        
+        // Enhanced cart animation
+        AnimationSystem.animate(cartContainer, {
+            transform: isExpanding ? 'translateY(0)' : 'translateY(100%)',
+            opacity: isExpanding ? 1 : 0
+        }, {
+            duration: 400,
+            easing: 'easeOutBack'
+        });
+        
         cartContainer.classList.toggle('expanded');
         
-        // Update button text
+        // Update button text with smooth transition
         const viewCartBtn = document.querySelector('.view-cart-btn');
         if (viewCartBtn) {
-            viewCartBtn.innerHTML = cartContainer.classList.contains('expanded') 
+            viewCartBtn.innerHTML = isExpanding 
                 ? '<i class="fas fa-times"></i> Close Cart' 
                 : '<i class="fas fa-shopping-cart"></i> View Cart';
         }
 
-        // Toggle main content layout
+        // Enhanced main content transition
         if (mainContent) {
-            if (cartContainer.classList.contains('expanded')) {
-                mainContent.style.display = 'grid';
-                mainContent.style.gridTemplateColumns = '1fr 2fr 1fr';
-            } else {
-                mainContent.style.display = 'grid';
-                mainContent.style.gridTemplateColumns = '1fr 2fr';
-            }
+            AnimationSystem.animate(mainContent, {
+                opacity: isExpanding ? 0.5 : 1
+            }, {
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+            
+            mainContent.style.gridTemplateColumns = isExpanding ? '1fr 2fr 1fr' : '1fr 2fr';
         }
     }
 }
@@ -495,97 +664,121 @@ function scrollToTop() {
 
 // Enhanced Mobile Interactions
 function initializeMobileFeatures() {
-    // Add pull-to-refresh functionality
     let touchStartY = 0;
     let touchEndY = 0;
     const pullThreshold = 100;
+    let isPulling = false;
     
     document.addEventListener('touchstart', function(e) {
         touchStartY = e.touches[0].clientY;
+        isPulling = window.scrollY === 0;
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (!isPulling) return;
+        
+        const pullDistance = touchStartY - e.touches[0].clientY;
+        if (pullDistance > 0) {
+            const pullProgress = Math.min(pullDistance / pullThreshold, 1);
+            AnimationSystem.animate(document.body, {
+                transform: `translateY(${pullProgress * 50}px)`
+            }, {
+                duration: 100,
+                easing: 'easeOutExpo'
+            });
+        }
     }, { passive: true });
     
     document.addEventListener('touchend', function(e) {
-        touchEndY = e.changedTouches[0].clientY;
-        const pullDistance = touchStartY - touchEndY;
+        if (!isPulling) return;
         
-        if (pullDistance > pullThreshold && window.scrollY === 0) {
-            refreshContent();
-        }
+        const pullDistance = touchStartY - e.changedTouches[0].clientY;
+        
+        AnimationSystem.animate(document.body, {
+            transform: 'translateY(0)'
+        }, {
+            duration: 300,
+            easing: 'easeOutBack',
+            onComplete: () => {
+                if (pullDistance > pullThreshold) {
+                    refreshContent();
+                }
+            }
+        });
+        
+        isPulling = false;
     }, { passive: true });
 
-    // Handle cart swipe gestures
+    // Enhanced cart swipe gestures
     let cartStartX = 0;
-    let cartEndX = 0;
+    let isSwiping = false;
 
     document.addEventListener('touchstart', function(e) {
         const cartContainer = document.querySelector('.cart-container');
         if (cartContainer && cartContainer.classList.contains('expanded')) {
             cartStartX = e.touches[0].clientX;
+            isSwiping = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+        if (!isSwiping) return;
+        
+        const cartContainer = document.querySelector('.cart-container');
+        if (cartContainer && cartContainer.classList.contains('expanded')) {
+            const swipeDistance = cartStartX - e.touches[0].clientX;
+            if (swipeDistance > 0) {
+                AnimationSystem.animate(cartContainer, {
+                    transform: `translateX(${swipeDistance * 0.5}px)`
+                }, {
+                    duration: 100,
+                    easing: 'easeOutExpo'
+                });
+            }
         }
     }, { passive: true });
 
     document.addEventListener('touchend', function(e) {
+        if (!isSwiping) return;
+        
         const cartContainer = document.querySelector('.cart-container');
         if (cartContainer && cartContainer.classList.contains('expanded')) {
-            cartEndX = e.changedTouches[0].clientX;
-            const swipeDistance = cartStartX - cartEndX;
+            const swipeDistance = cartStartX - e.changedTouches[0].clientX;
             
-            if (swipeDistance > 50) {
-                toggleCart();
-            }
-        }
-    }, { passive: true });
-
-    // Add haptic feedback
-    function vibrateDevice() {
-        if ('vibrate' in navigator) {
-            navigator.vibrate(50);
-        }
-    }
-
-    // Add haptic feedback to buttons
-    document.querySelectorAll('button').forEach(button => {
-        button.addEventListener('click', vibrateDevice);
-    });
-
-    // Add double-tap to zoom for product images
-    document.querySelectorAll('.product-card img').forEach(img => {
-        let lastTap = 0;
-        img.addEventListener('click', function(e) {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            
-            if (tapLength < 300 && tapLength > 0) {
-                e.preventDefault();
-                if (img.style.transform === 'scale(1.5)') {
-                    img.style.transform = 'scale(1)';
-                } else {
-                    img.style.transform = 'scale(1.5)';
+            AnimationSystem.animate(cartContainer, {
+                transform: 'translateX(0)'
+            }, {
+                duration: 300,
+                easing: 'easeOutBack',
+                onComplete: () => {
+                    if (swipeDistance > 50) {
+                        toggleCart();
+                    }
                 }
-            }
-            lastTap = currentTime;
-        });
-    });
-
-    // Add loading states
-    function showLoading(element) {
-        element.classList.add('loading-skeleton');
-        element.style.pointerEvents = 'none';
-    }
-
-    function hideLoading(element) {
-        element.classList.remove('loading-skeleton');
-        element.style.pointerEvents = 'auto';
-    }
+            });
+        }
+        
+        isSwiping = false;
+    }, { passive: true });
 
     // Enhanced touch feedback
     document.querySelectorAll('.product-card, .category-card, button').forEach(element => {
         element.addEventListener('touchstart', function() {
-            this.style.transform = 'scale(0.98)';
+            AnimationSystem.animate(this, {
+                transform: 'scale(0.98)'
+            }, {
+                duration: 100,
+                easing: 'easeOutExpo'
+            });
         }, { passive: true });
         
         element.addEventListener('touchend', function() {
-            this.style.transform = '';
+            AnimationSystem.animate(this, {
+                transform: 'scale(1)'
+            }, {
+                duration: 200,
+                easing: 'easeOutBack'
+            });
         }, { passive: true });
     });
 }
@@ -603,33 +796,28 @@ function refreshContent() {
     }
 }
 
-// Enhanced notification system
-function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-        ${message}
-    `;
-    
-    // Remove existing notifications
-    document.querySelectorAll('.notification').forEach(n => n.remove());
-    
-    document.body.appendChild(notification);
-    
-    // Add entrance animation
-    notification.style.animation = 'slideIn 0.3s ease-out';
-    
-    // Vibrate on notification
-    if ('vibrate' in navigator) {
-        navigator.vibrate(100);
-    }
-    
-    setTimeout(() => {
-        notification.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
+// Optimize performance for frequent operations
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+// Optimize window resize handling
+window.addEventListener('resize', debounce(function() {
+    handleResponsiveLayout();
+}, 100));
+
+// Optimize scroll handling
+window.addEventListener('scroll', debounce(function() {
+    // Add any scroll-based animations here
+}, 100));
 
 // Optimize touch interactions
 document.addEventListener('touchstart', function() {}, {passive: true});
@@ -694,4 +882,76 @@ function addOrder() {
             addOrderBtn.disabled = false;
         }
     });
+}
+
+// Enhanced category selection with optimized animations
+function selectCategory(categoryId) {
+    const productsGrid = document.querySelector('.products-grid');
+    const categories = document.querySelectorAll('.category-card');
+    
+    // Show loading state with smooth transition
+    if (productsGrid) {
+        productsGrid.style.opacity = '0.5';
+        productsGrid.style.transition = 'opacity 0.3s ease';
+        productsGrid.innerHTML = '<div class="loading-products"><i class="fas fa-spinner fa-spin"></i> Loading products...</div>';
+    }
+
+    // Update active category with smooth transition
+    categories.forEach(category => {
+        if (category.getAttribute('href').includes(categoryId)) {
+            AnimationSystem.animate(category, {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 6px 12px rgba(0, 0, 0, 0.15)'
+            }, {
+                duration: 300,
+                easing: 'easeOutBack'
+            });
+            category.classList.add('active');
+        } else {
+            category.classList.remove('active');
+            category.style.transform = '';
+            category.style.boxShadow = '';
+        }
+    });
+
+    // Fetch products with optimized loading
+    fetch(`get_products.php?category=${categoryId}`)
+        .then(response => response.text())
+        .then(html => {
+            if (productsGrid) {
+                // Fade out current content
+                AnimationSystem.fadeOut(productsGrid, {
+                    duration: 200,
+                    onComplete: () => {
+                        // Update content
+                        productsGrid.innerHTML = html;
+                        
+                        // Reset quantities for new products
+                        const newProducts = productsGrid.querySelectorAll('.product-card');
+                        newProducts.forEach(product => {
+                            const productId = product.querySelector('.quantity-btn').getAttribute('onclick').match(/\d+/)[0];
+                            quantities[productId] = 0;
+                            updateQuantityDisplay(productId);
+                        });
+                        
+                        // Fade in new content with staggered animation
+                        const productCards = productsGrid.querySelectorAll('.product-card');
+                        AnimationSystem.stagger(productCards, {
+                            opacity: 1,
+                            transform: 'translateY(0)'
+                        }, {
+                            duration: 300,
+                            easing: 'easeOutBack',
+                            staggerDelay: 30
+                        });
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (productsGrid) {
+                productsGrid.innerHTML = '<p class="error-message"><i class="fas fa-exclamation-circle"></i> Error loading products</p>';
+            }
+        });
 } 
