@@ -60,6 +60,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Update the cart container styles when the page loads
+    if (cartContainer) {
+        cartContainer.style.transition = 'all 0.3s ease-in-out';
+        cartContainer.style.display = 'block';
+        cartContainer.style.opacity = '1';
+        cartContainer.style.visibility = 'visible';
+    }
 });
 
 // Save cart to localStorage whenever it changes
@@ -219,135 +227,41 @@ function checkout() {
     showReceipt();
 }
 
-// Advanced Animation System
-const AnimationSystem = {
-    // Easing functions for smoother animations
-    easings: {
-        easeOutExpo: t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
-        easeOutBack: t => {
-            const c1 = 1.70158;
-            const c3 = c1 + 1;
-            return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-        },
-        easeOutElastic: t => {
-            const c4 = (2 * Math.PI) / 3;
-            return t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
-        },
-        easeOutBounce: t => {
-            const n1 = 7.5625;
-            const d1 = 2.75;
-            if (t < 1 / d1) return n1 * t * t;
-            if (t < 2 / d1) return n1 * (t -= 1.5 / d1) * t + 0.75;
-            if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + 0.9375;
-            return n1 * (t -= 2.625 / d1) * t + 0.984375;
-        }
-    },
+// Performance optimizations
+const raf = window.requestAnimationFrame;
+const now = () => performance.now();
 
-    // Advanced animation function with multiple properties and easing
-    animate(element, properties, options = {}) {
-        const {
-            duration = 500,
-            easing = 'easeOutExpo',
-            delay = 0,
-            onComplete = () => {}
-        } = options;
-
-        const startTime = performance.now();
-        const startProps = {};
-        const endProps = {};
-        const easingFn = this.easings[easing] || this.easings.easeOutExpo;
-
-        // Get start values and prepare end values
-        for (const prop in properties) {
-            const computedStyle = getComputedStyle(element);
-            startProps[prop] = parseFloat(computedStyle[prop]) || 0;
-            endProps[prop] = properties[prop];
-        }
-
-        // Animation frame function
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime - delay;
-            const progress = Math.min(elapsed / duration, 1);
-            const easedProgress = easingFn(progress);
-
-            // Apply properties with easing
-            for (const prop in properties) {
-                const value = startProps[prop] + (endProps[prop] - startProps[prop]) * easedProgress;
-                element.style[prop] = value + (prop === 'opacity' ? '' : 'px');
-            }
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                onComplete();
-            }
-        };
-
-        // Start animation after delay
-        if (delay > 0) {
-            setTimeout(() => requestAnimationFrame(animate), delay);
-        } else {
-            requestAnimationFrame(animate);
-        }
-    },
-
-    // Staggered animation for multiple elements
-    stagger(elements, properties, options = {}) {
-        const {
-            staggerDelay = 50,
-            ...animationOptions
-        } = options;
-
-        elements.forEach((element, index) => {
-            this.animate(element, properties, {
-                ...animationOptions,
-                delay: index * staggerDelay
-            });
-        });
-    },
-
-    // Fade in with transform
-    fadeIn(element, options = {}) {
-        const {
-            duration = 400,
-            transform = 'translateY(20px)',
-            ...rest
-        } = options;
-
-        element.style.opacity = '0';
-        element.style.transform = transform;
-        element.style.transition = 'none';
-
-        requestAnimationFrame(() => {
-            this.animate(element, {
-                opacity: 1,
-                transform: 'translateY(0)'
-            }, {
-                duration,
-                ...rest
-            });
-        });
-    },
-
-    // Fade out with transform
-    fadeOut(element, options = {}) {
-        const {
-            duration = 400,
-            transform = 'translateY(-20px)',
-            onComplete = () => {},
-            ...rest
-        } = options;
-
-        this.animate(element, {
-            opacity: 0,
-            transform
-        }, {
-            duration,
-            onComplete,
-            ...rest
-        });
+// Smooth animation helper
+function smoothAnimation(element, properties, duration = 300) {
+    const start = now();
+    const startProps = {};
+    const endProps = {};
+    
+    // Get start values
+    for (const prop in properties) {
+        startProps[prop] = parseFloat(getComputedStyle(element)[prop]);
+        endProps[prop] = properties[prop];
     }
-};
+    
+    function animate() {
+        const elapsed = now() - start;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Use spring easing for smoother animation
+        const springProgress = 1 - Math.pow(1 - progress, 3);
+        
+        for (const prop in properties) {
+            const value = startProps[prop] + (endProps[prop] - startProps[prop]) * springProgress;
+            element.style[prop] = value + (prop === 'opacity' ? '' : 'px');
+        }
+        
+        if (progress < 1) {
+            raf(animate);
+        }
+    }
+    
+    raf(animate);
+}
 
 // Enhanced notification system with smoother animations
 function showNotification(message, type = 'success') {
@@ -358,22 +272,16 @@ function showNotification(message, type = 'success') {
         ${message}
     `;
     
-    // Remove existing notifications with fade out
-    document.querySelectorAll('.notification').forEach(n => {
-        AnimationSystem.fadeOut(n, {
-            duration: 200,
-            onComplete: () => n.remove()
-        });
-    });
+    // Remove existing notifications
+    document.querySelectorAll('.notification').forEach(n => n.remove());
     
     document.body.appendChild(notification);
     
-    // Enhanced entrance animation
-    AnimationSystem.fadeIn(notification, {
-        duration: 300,
-        easing: 'easeOutBack',
-        transform: 'translateX(100%) scale(0.8)'
-    });
+    // Use smooth animation helper
+    smoothAnimation(notification, {
+        opacity: 1,
+        transform: 'translateX(0) scale(1)'
+    }, 200);
     
     // Vibrate with optimized pattern
     if ('vibrate' in navigator) {
@@ -381,16 +289,16 @@ function showNotification(message, type = 'success') {
     }
     
     setTimeout(() => {
-        AnimationSystem.fadeOut(notification, {
-            duration: 300,
-            easing: 'easeOutExpo',
-            transform: 'translateX(100%) scale(0.95)',
-            onComplete: () => notification.remove()
-        });
+        smoothAnimation(notification, {
+            opacity: 0,
+            transform: 'translateX(100%) scale(0.95)'
+        }, 200);
+        
+        setTimeout(() => notification.remove(), 200);
     }, 2500);
 }
 
-// Enhanced receipt display with smoother animations
+// Enhanced receipt display with smooth animations
 function showReceipt() {
     const modal = document.getElementById('receipt-modal');
     const receiptItems = document.querySelector('.receipt-items');
@@ -403,11 +311,10 @@ function showReceipt() {
     receiptDate.textContent = now.toLocaleDateString();
     receiptTime.textContent = now.toLocaleTimeString();
 
-    // Generate receipt items with enhanced staggered animation
+    // Generate receipt items with staggered animation
     let total = 0;
     receiptItems.innerHTML = '';
     
-    const receiptElements = [];
     cart.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
@@ -424,20 +331,17 @@ function showReceipt() {
         `;
         
         receiptItems.appendChild(receiptItem);
-        receiptElements.push(receiptItem);
+        
+        // Use smooth animation helper for staggered items
+        setTimeout(() => {
+            smoothAnimation(receiptItem, {
+                opacity: 1,
+                transform: 'translateY(0)'
+            }, 200);
+        }, index * 50);
     });
 
-    // Enhanced staggered animation for receipt items
-    AnimationSystem.stagger(receiptElements, {
-        opacity: 1,
-        transform: 'translateY(0)'
-    }, {
-        duration: 300,
-        easing: 'easeOutBack',
-        staggerDelay: 50
-    });
-
-    // Add total with enhanced animation
+    // Add total with spring animation
     receiptTotal.innerHTML = `
         <div class="receipt-total-row">
             <span>Total Amount:</span>
@@ -445,21 +349,18 @@ function showReceipt() {
         </div>
     `;
 
-    // Enhanced modal animation
+    // Show modal with smooth transition
     modal.style.display = 'flex';
-    modal.style.opacity = '0';
-    
-    AnimationSystem.fadeIn(modal, {
-        duration: 400,
-        easing: 'easeOutBack',
-        transform: 'scale(0.95)'
-    });
+    smoothAnimation(modal, {
+        opacity: 1
+    }, 200);
 }
 
-// Enhanced cart toggle with smoother animations
+// Enhanced cart toggle with smooth animations
 function toggleCart() {
     const cartContainer = document.querySelector('.cart-container');
     const mainContent = document.querySelector('main');
+    const viewCartBtn = document.querySelector('.view-cart-btn');
     
     if (cart.length === 0) {
         showNotification('Your cart is empty!', 'error');
@@ -469,35 +370,33 @@ function toggleCart() {
     if (cartContainer) {
         const isExpanding = !cartContainer.classList.contains('expanded');
         
-        // Enhanced cart animation
-        AnimationSystem.animate(cartContainer, {
-            transform: isExpanding ? 'translateY(0)' : 'translateY(100%)',
-            opacity: isExpanding ? 1 : 0
-        }, {
-            duration: 400,
-            easing: 'easeOutBack'
-        });
-        
+        // Toggle expanded class
         cartContainer.classList.toggle('expanded');
         
-        // Update button text with smooth transition
-        const viewCartBtn = document.querySelector('.view-cart-btn');
+        // Update button text
         if (viewCartBtn) {
             viewCartBtn.innerHTML = isExpanding 
                 ? '<i class="fas fa-times"></i> Close Cart' 
                 : '<i class="fas fa-shopping-cart"></i> View Cart';
         }
 
-        // Enhanced main content transition
+        // Update main content layout
         if (mainContent) {
-            AnimationSystem.animate(mainContent, {
-                opacity: isExpanding ? 0.5 : 1
-            }, {
-                duration: 300,
-                easing: 'easeOutExpo'
-            });
-            
-            mainContent.style.gridTemplateColumns = isExpanding ? '1fr 2fr 1fr' : '1fr 2fr';
+            if (isExpanding) {
+                mainContent.style.display = 'grid';
+                mainContent.style.gridTemplateColumns = '1fr 2fr 1fr';
+            } else {
+                mainContent.style.display = 'grid';
+                mainContent.style.gridTemplateColumns = '1fr 2fr';
+            }
+        }
+
+        // Ensure cart is visible when expanded
+        if (isExpanding) {
+            cartContainer.style.display = 'block';
+            cartContainer.style.opacity = '1';
+            cartContainer.style.visibility = 'visible';
+            cartContainer.style.transform = 'translateY(0)';
         }
     }
 }
@@ -680,12 +579,9 @@ function initializeMobileFeatures() {
         const pullDistance = touchStartY - e.touches[0].clientY;
         if (pullDistance > 0) {
             const pullProgress = Math.min(pullDistance / pullThreshold, 1);
-            AnimationSystem.animate(document.body, {
+            smoothAnimation(document.body, {
                 transform: `translateY(${pullProgress * 50}px)`
-            }, {
-                duration: 100,
-                easing: 'easeOutExpo'
-            });
+            }, 100);
         }
     }, { passive: true });
     
@@ -694,17 +590,16 @@ function initializeMobileFeatures() {
         
         const pullDistance = touchStartY - e.changedTouches[0].clientY;
         
-        AnimationSystem.animate(document.body, {
-            transform: 'translateY(0)'
-        }, {
-            duration: 300,
-            easing: 'easeOutBack',
-            onComplete: () => {
-                if (pullDistance > pullThreshold) {
-                    refreshContent();
-                }
-            }
-        });
+        if (pullDistance > pullThreshold) {
+            smoothAnimation(document.body, {
+                transform: 'translateY(0)'
+            }, 200);
+            refreshContent();
+        } else {
+            smoothAnimation(document.body, {
+                transform: 'translateY(0)'
+            }, 200);
+        }
         
         isPulling = false;
     }, { passive: true });
@@ -728,12 +623,9 @@ function initializeMobileFeatures() {
         if (cartContainer && cartContainer.classList.contains('expanded')) {
             const swipeDistance = cartStartX - e.touches[0].clientX;
             if (swipeDistance > 0) {
-                AnimationSystem.animate(cartContainer, {
+                smoothAnimation(cartContainer, {
                     transform: `translateX(${swipeDistance * 0.5}px)`
-                }, {
-                    duration: 100,
-                    easing: 'easeOutExpo'
-                });
+                }, 100);
             }
         }
     }, { passive: true });
@@ -745,17 +637,13 @@ function initializeMobileFeatures() {
         if (cartContainer && cartContainer.classList.contains('expanded')) {
             const swipeDistance = cartStartX - e.changedTouches[0].clientX;
             
-            AnimationSystem.animate(cartContainer, {
+            smoothAnimation(cartContainer, {
                 transform: 'translateX(0)'
-            }, {
-                duration: 300,
-                easing: 'easeOutBack',
-                onComplete: () => {
-                    if (swipeDistance > 50) {
-                        toggleCart();
-                    }
-                }
-            });
+            }, 200);
+            
+            if (swipeDistance > 50) {
+                toggleCart();
+            }
         }
         
         isSwiping = false;
@@ -764,21 +652,15 @@ function initializeMobileFeatures() {
     // Enhanced touch feedback
     document.querySelectorAll('.product-card, .category-card, button').forEach(element => {
         element.addEventListener('touchstart', function() {
-            AnimationSystem.animate(this, {
+            smoothAnimation(this, {
                 transform: 'scale(0.98)'
-            }, {
-                duration: 100,
-                easing: 'easeOutExpo'
-            });
+            }, 100);
         }, { passive: true });
         
         element.addEventListener('touchend', function() {
-            AnimationSystem.animate(this, {
+            smoothAnimation(this, {
                 transform: 'scale(1)'
-            }, {
-                duration: 200,
-                easing: 'easeOutBack'
-            });
+            }, 200);
         }, { passive: true });
     });
 }
@@ -845,8 +727,9 @@ function addOrder() {
 
     // Show loading state
     const addOrderBtn = document.querySelector('.add-order-btn');
+    const originalText = addOrderBtn ? addOrderBtn.innerHTML : '';
+    
     if (addOrderBtn) {
-        const originalText = addOrderBtn.innerHTML;
         addOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
         addOrderBtn.disabled = true;
     }
@@ -858,7 +741,12 @@ function addOrder() {
         },
         body: JSON.stringify(orderData)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             showNotification('Order added successfully!', 'success');
@@ -867,13 +755,17 @@ function addOrder() {
             updateCart();
             saveCart();
             closeReceipt();
+            // Redirect to admin_orders.php after successful order
+            setTimeout(() => {
+                window.location.href = 'admin_orders.php';
+            }, 1000); // Add a small delay to show the success message
         } else {
-            showNotification(data.message || 'Error adding order', 'error');
+            throw new Error(data.message || 'Error adding order');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('Error adding order', 'error');
+        showNotification(error.message || 'Error adding order', 'error');
     })
     .finally(() => {
         // Reset button state
@@ -884,74 +776,207 @@ function addOrder() {
     });
 }
 
-// Enhanced category selection with optimized animations
-function selectCategory(categoryId) {
-    const productsGrid = document.querySelector('.products-grid');
-    const categories = document.querySelectorAll('.category-card');
-    
-    // Show loading state with smooth transition
-    if (productsGrid) {
-        productsGrid.style.opacity = '0.5';
-        productsGrid.style.transition = 'opacity 0.3s ease';
-        productsGrid.innerHTML = '<div class="loading-products"><i class="fas fa-spinner fa-spin"></i> Loading products...</div>';
+// Add closeReceipt function if it doesn't exist
+function closeReceipt() {
+    const modal = document.getElementById('receipt-modal');
+    if (modal) {
+        modal.style.display = 'none';
     }
+}
 
-    // Update active category with smooth transition
-    categories.forEach(category => {
-        if (category.getAttribute('href').includes(categoryId)) {
-            AnimationSystem.animate(category, {
-                transform: 'translateY(-8px) scale(1.02)',
-                boxShadow: '0 6px 12px rgba(0, 0, 0, 0.15)'
-            }, {
-                duration: 300,
-                easing: 'easeOutBack'
-            });
-            category.classList.add('active');
-        } else {
-            category.classList.remove('active');
-            category.style.transform = '';
-            category.style.boxShadow = '';
-        }
-    });
-
-    // Fetch products with optimized loading
-    fetch(`get_products.php?category=${categoryId}`)
-        .then(response => response.text())
-        .then(html => {
-            if (productsGrid) {
-                // Fade out current content
-                AnimationSystem.fadeOut(productsGrid, {
-                    duration: 200,
-                    onComplete: () => {
-                        // Update content
-                        productsGrid.innerHTML = html;
-                        
-                        // Reset quantities for new products
-                        const newProducts = productsGrid.querySelectorAll('.product-card');
-                        newProducts.forEach(product => {
-                            const productId = product.querySelector('.quantity-btn').getAttribute('onclick').match(/\d+/)[0];
-                            quantities[productId] = 0;
-                            updateQuantityDisplay(productId);
-                        });
-                        
-                        // Fade in new content with staggered animation
-                        const productCards = productsGrid.querySelectorAll('.product-card');
-                        AnimationSystem.stagger(productCards, {
-                            opacity: 1,
-                            transform: 'translateY(0)'
-                        }, {
-                            duration: 300,
-                            easing: 'easeOutBack',
-                            staggerDelay: 30
-                        });
-                    }
-                });
+function printReceipt() {
+    const receipt = document.querySelector('.receipt');
+    const receiptActions = document.querySelector('.receipt-actions');
+    const originalDisplay = receiptActions.style.display;
+    
+    // Hide the action buttons temporarily
+    receiptActions.style.display = 'none';
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    
+    // Get the receipt content
+    const receiptContent = receipt.innerHTML;
+    
+    // Add print-specific styles with enhanced design
+    const printStyles = `
+        <style>
+            @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+            
+            @media print {
+                body { 
+                    margin: 0; 
+                    padding: 20px;
+                    background: #fff;
+                }
+                .receipt { 
+                    width: 80mm;
+                    margin: 0 auto;
+                    padding: 15px;
+                    font-family: 'Courier New', monospace;
+                    background: #fff;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                }
+                .receipt-header { 
+                    text-align: center; 
+                    margin-bottom: 20px;
+                    border-bottom: 2px dashed #000;
+                    padding-bottom: 15px;
+                }
+                .receipt-header h2 {
+                    font-size: 18px;
+                    margin: 0 0 5px 0;
+                    color: #2E7D32;
+                }
+                .receipt-header p {
+                    margin: 5px 0;
+                    font-size: 12px;
+                }
+                .receipt-header i {
+                    font-size: 24px;
+                    color: #2E7D32;
+                    margin-bottom: 10px;
+                }
+                .receipt-items { 
+                    margin: 20px 0;
+                    border-top: 1px dashed #000;
+                    border-bottom: 1px dashed #000;
+                    padding: 10px 0;
+                }
+                .receipt-item { 
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 12px;
+                    line-height: 1.4;
+                }
+                .receipt-item .item-name {
+                    flex: 1;
+                    margin-right: 10px;
+                }
+                .receipt-item .item-quantity {
+                    text-align: center;
+                    width: 30px;
+                }
+                .receipt-item .item-price {
+                    text-align: right;
+                    width: 60px;
+                }
+                .receipt-total-row {
+                    border-top: 2px dashed #000;
+                    margin-top: 15px;
+                    padding-top: 15px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .receipt-footer { 
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 12px;
+                    border-top: 1px dashed #000;
+                    padding-top: 15px;
+                }
+                .receipt-footer i {
+                    font-size: 16px;
+                    color: #2E7D32;
+                    margin-bottom: 5px;
+                }
+                .receipt-footer p {
+                    margin: 5px 0;
+                }
+                button, .receipt-actions { 
+                    display: none !important; 
+                }
+                .divider {
+                    border-top: 1px dashed #000;
+                    margin: 10px 0;
+                }
+                .store-info {
+                    text-align: center;
+                    margin-bottom: 15px;
+                }
+                .store-info i {
+                    font-size: 24px;
+                    color: #2E7D32;
+                    margin-bottom: 5px;
+                }
+                .store-name {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin: 5px 0;
+                }
+                .store-address {
+                    font-size: 11px;
+                    margin: 5px 0;
+                }
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (productsGrid) {
-                productsGrid.innerHTML = '<p class="error-message"><i class="fas fa-exclamation-circle"></i> Error loading products</p>';
-            }
-        });
+        </style>
+    `;
+    
+    // Create enhanced receipt content
+    const enhancedReceiptContent = `
+        <div class="receipt">
+            <div class="store-info">
+                <i class="fas fa-leaf"></i>
+                <div class="store-name">BauApp</div>
+                <div class="store-address">Your One-Stop Resto Products</div>
+            </div>
+            <div class="receipt-header">
+                <i class="fas fa-receipt"></i>
+                <h2>ORDER RECEIPT</h2>
+                <p><i class="fas fa-calendar"></i> Date: ${new Date().toLocaleDateString()}</p>
+                <p><i class="fas fa-clock"></i> Time: ${new Date().toLocaleTimeString()}</p>
+            </div>
+            <div class="receipt-items">
+                ${Array.from(receipt.querySelectorAll('.receipt-item')).map(item => `
+                    <div class="receipt-item">
+                        <span class="item-name">${item.querySelector('.item-name').textContent}</span>
+                        <span class="item-quantity">${item.querySelector('.item-quantity').textContent}</span>
+                        <span class="item-price">${item.querySelector('.item-price').textContent}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="receipt-total-row">
+                <span><i class="fas fa-calculator"></i> Total Amount:</span>
+                <span>${receipt.querySelector('.receipt-total-row span:last-child').textContent}</span>
+            </div>
+            <div class="receipt-footer">
+                <i class="fas fa-heart"></i>
+                <p>Thank you for your purchase!</p>
+                <p>Please come again</p>
+                <div class="divider"></div>
+                <p><i class="fas fa-phone"></i> Contact: (123) 456-7890</p>
+                <p><i class="fas fa-envelope"></i> Email: support@bauapp.com</p>
+            </div>
+        </div>
+    `;
+    
+    // Write the content to the new window
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt</title>
+            ${printStyles}
+        </head>
+        <body>
+            ${enhancedReceiptContent}
+        </body>
+        </html>
+    `);
+    
+    // Wait for content to load then print
+    printWindow.document.close();
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+    };
+    
+    // Restore the action buttons
+    receiptActions.style.display = originalDisplay;
+    
+    // Show success notification
+    showNotification('Receipt printed successfully!', 'success');
 } 
