@@ -265,9 +265,130 @@ $products_result = $conn->query($products_sql);
                 width: 100%;
             }
         }
+
+        .logout-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .logout-overlay.active {
+            opacity: 1;
+        }
+
+        .logout-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logout-leaf {
+            position: absolute;
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease;
+        }
+
+        .logout-leaf.main {
+            font-size: 3.5rem;
+            animation: mainLeafSpin 2s infinite ease-in-out;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .logout-leaf.orbit {
+            animation: orbitLeaf 3s infinite linear;
+        }
+
+        .logout-leaf.orbit:nth-child(2) {
+            animation-delay: -1s;
+        }
+
+        .logout-leaf.orbit:nth-child(3) {
+            animation-delay: -2s;
+        }
+
+        .logout-text {
+            margin-top: 2rem;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .logout-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .logout-dots {
+            display: inline-block;
+            animation: loadingDots 1.5s infinite;
+        }
+
+        @keyframes mainLeafSpin {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(180deg) scale(1.1);
+            }
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+
+        @keyframes orbitLeaf {
+            0% {
+                transform: rotate(0deg) translateX(40px) rotate(0deg) scale(0.8);
+                opacity: 0.6;
+            }
+            100% {
+                transform: rotate(360deg) translateX(40px) rotate(-360deg) scale(0.8);
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes loadingDots {
+            0%, 20% {
+                content: '.';
+            }
+            40% {
+                content: '..';
+            }
+            60%, 100% {
+                content: '...';
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="logout-overlay">
+        <div class="logout-container">
+            <i class="fas fa-leaf logout-leaf main"></i>
+            <i class="fas fa-leaf logout-leaf orbit"></i>
+            <i class="fas fa-leaf logout-leaf orbit"></i>
+            <i class="fas fa-leaf logout-leaf orbit"></i>
+        </div>
+        <div class="logout-text">Logging out<span class="logout-dots">...</span></div>
+    </div>
     <div class="dashboard-container">
         <header>
             <div class="header-top">
@@ -491,6 +612,25 @@ $products_result = $conn->query($products_sql);
                 }
             }
         }
+
+        // Add logout animation
+        document.querySelector('.logout-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const logoutOverlay = document.querySelector('.logout-overlay');
+            const logoutText = document.querySelector('.logout-text');
+            
+            // Show logout overlay with fade effect
+            logoutOverlay.style.display = 'flex';
+            setTimeout(() => {
+                logoutOverlay.classList.add('active');
+                logoutText.classList.add('active');
+            }, 50);
+            
+            // Redirect after animation
+            setTimeout(() => {
+                window.location.href = 'index.php';
+            }, 2000);
+        });
     </script>
 </body>
 </html>

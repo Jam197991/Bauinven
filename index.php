@@ -85,6 +85,31 @@
             animation: loadingDots 1.5s infinite;
         }
 
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(46, 125, 50, 0.1);
+            border-radius: 2px;
+            margin-top: 1rem;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .loading-progress.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loading-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 2px;
+            transition: width 1.5s ease;
+        }
+
         @keyframes mainLeafSpin {
             0% {
                 transform: rotate(0deg) scale(1);
@@ -119,31 +144,6 @@
                 content: '...';
             }
         }
-
-        .loading-progress {
-            width: 200px;
-            height: 4px;
-            background: rgba(46, 125, 50, 0.1);
-            border-radius: 2px;
-            margin-top: 1rem;
-            overflow: hidden;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-        }
-
-        .loading-progress.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .loading-progress-bar {
-            width: 0%;
-            height: 100%;
-            background: var(--primary-color);
-            border-radius: 2px;
-            transition: width 1.5s ease;
-        }
     </style>
 </head>
 <body>
@@ -154,7 +154,7 @@
             <i class="fas fa-leaf loading-leaf orbit"></i>
             <i class="fas fa-leaf loading-leaf orbit"></i>
         </div>
-        <div class="loading-text">Loading<span class="loading-dots">...</span></div>
+        <div class="loading-text">Start Ordering<span class="loading-dots">...</span></div>
         <div class="loading-progress">
             <div class="loading-progress-bar"></div>
         </div>
