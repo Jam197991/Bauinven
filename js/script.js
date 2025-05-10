@@ -1,6 +1,8 @@
 // Cart and quantities management
 let cart = [];
 let quantities = {};
+let cartStartX = 0;
+let cartEndX = 0;
 
 // Load cart from localStorage on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -26,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (cartContainer) {
         cartContainer.addEventListener('touchstart', function(e) {
             touchStartY = e.touches[0].clientY;
+            if (cartContainer.classList.contains('expanded')) {
+                cartStartX = e.touches[0].clientX;
+            }
         }, { passive: true });
 
         cartContainer.addEventListener('touchend', function(e) {
@@ -34,6 +39,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (swipeDistance > 100 && cartContainer.classList.contains('expanded')) {
                 toggleCart();
+            }
+
+            if (cartContainer.classList.contains('expanded')) {
+                cartEndX = e.changedTouches[0].clientX;
+                const swipeDistanceX = cartEndX - cartStartX;
+
+                // Swipe right to close cart
+                if (swipeDistanceX > 100) {
+                    toggleCart();
+                }
             }
         }, { passive: true });
     }
