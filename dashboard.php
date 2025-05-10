@@ -47,9 +47,6 @@ $products_result = $conn->query($products_sql);
                     <span id="cart-total">₱0.00</span>
                 </div>
                 <div class="header-buttons">
-                    <button onclick="toggleCart()" class="view-cart-btn">
-                        <i class="fas fa-shopping-cart"></i> View Cart
-                    </button>
                     <a href="admin_orders.php" class="admin-btn">
                         <i class="fas fa-shopping-bag"></i> View Orders
                     </a>
