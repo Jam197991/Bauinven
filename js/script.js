@@ -1,8 +1,6 @@
 // Cart and quantities management
 let cart = [];
 let quantities = {};
-let cartStartX = 0;
-let cartEndX = 0;
 
 // Load cart from localStorage on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -24,13 +22,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let touchStartY = 0;
     let touchEndY = 0;
     const cartContainer = document.querySelector('.cart-container');
+    const cartToggle = document.querySelector('.cart-toggle-btn');
+    const mainContent = document.querySelector('main');
 
     if (cartContainer) {
         cartContainer.addEventListener('touchstart', function(e) {
             touchStartY = e.touches[0].clientY;
-            if (cartContainer.classList.contains('expanded')) {
-                cartStartX = e.touches[0].clientX;
-            }
         }, { passive: true });
 
         cartContainer.addEventListener('touchend', function(e) {
@@ -40,17 +37,28 @@ document.addEventListener('DOMContentLoaded', function() {
             if (swipeDistance > 100 && cartContainer.classList.contains('expanded')) {
                 toggleCart();
             }
-
-            if (cartContainer.classList.contains('expanded')) {
-                cartEndX = e.changedTouches[0].clientX;
-                const swipeDistanceX = cartEndX - cartStartX;
-
-                // Swipe right to close cart
-                if (swipeDistanceX > 100) {
-                    toggleCart();
-                }
-            }
         }, { passive: true });
+    }
+
+    if (cartToggle && cartContainer) {
+        cartToggle.addEventListener('click', function() {
+            cartContainer.classList.toggle('expanded');
+            cartContainer.classList.toggle('collapsed');
+            
+            // Add a small delay before hiding the main content
+            if (cartContainer.classList.contains('expanded')) {
+                mainContent.style.opacity = '0';
+                mainContent.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    mainContent.style.display = 'none';
+                }, 300);
+            } else {
+                mainContent.style.display = 'block';
+                setTimeout(() => {
+                    mainContent.style.opacity = '1';
+                }, 50);
+            }
+        });
     }
 });
 
@@ -96,13 +104,35 @@ function addToCart(id, name, price) {
     
     // Show cart after adding item
     const cartContainer = document.querySelector('.cart-container');
-    if (cartContainer && window.innerWidth <= 1023) {
+    if (cartContainer) {
         cartContainer.classList.add('expanded');
+        
+        // Update button text
+        const viewCartBtn = document.querySelector('.view-cart-btn');
+        if (viewCartBtn) {
+            viewCartBtn.innerHTML = '<i class="fas fa-times"></i> Close Cart';
+        }
+
         // Animate new items
         const cartItems = cartContainer.querySelectorAll('.cart-item');
         cartItems.forEach((item, index) => {
             item.style.animationDelay = `${index * 0.1}s`;
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                item.style.transition = 'all 0.3s ease-out';
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            }, index * 100);
         });
+
+        // Show main content in grid layout
+        const mainContent = document.querySelector('main');
+        if (mainContent) {
+            mainContent.style.display = 'grid';
+            mainContent.style.gridTemplateColumns = '1fr 2fr 1fr';
+        }
     }
     
     showNotification(`${name} added to cart`);
@@ -127,7 +157,7 @@ function updateCart() {
     const mobileCartCount = document.getElementById('mobile-cart-count');
     const mobileCartTotal = document.getElementById('mobile-cart-total');
     const cartContainer = document.querySelector('.cart-container');
-    const cartToggle = document.querySelector('.cart-toggle');
+    const viewCartBtn = document.querySelector('.view-cart-btn');
     
     if (!cartItems) return;
     
@@ -165,14 +195,14 @@ function updateCart() {
         if (el) el.textContent = `₱${total.toFixed(2)}`;
     });
 
-    // Show/hide cart toggle based on cart content
-    if (cartToggle) {
-        cartToggle.style.display = count > 0 ? 'flex' : 'none';
-    }
-
     // Update cart container visibility
     if (cartContainer) {
-        cartContainer.style.display = count > 0 ? 'block' : 'none';
+        if (count === 0) {
+            cartContainer.classList.remove('expanded');
+            if (viewCartBtn) {
+                viewCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> View Cart';
+            }
+        }
     }
 
     // Save cart to localStorage
@@ -185,37 +215,8 @@ function checkout() {
         return;
     }
 
-    // Prepare order data
-    const orderData = {
-        items: cart,
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-    };
-
-    // Save order to database
-    fetch('save_order.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showReceipt();
-            // Clear cart after successful order
-            cart = [];
-            quantities = {};
-            updateCart();
-            showNotification('Order placed successfully!', 'success');
-        } else {
-            showNotification('Error saving order: ' + data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Error saving order. Please try again.', 'error');
-    });
+    // Show receipt modal
+    showReceipt();
 }
 
 function showReceipt() {
@@ -301,7 +302,13 @@ function printReceipt() {
 // Enhanced Cart Functionality
 function toggleCart() {
     const cartContainer = document.querySelector('.cart-container');
+    const mainContent = document.querySelector('main');
     
+    if (cart.length === 0) {
+        showNotification('Your cart is empty!', 'error');
+        return;
+    }
+
     if (cartContainer) {
         cartContainer.classList.toggle('expanded');
         
@@ -312,29 +319,16 @@ function toggleCart() {
                 ? '<i class="fas fa-times"></i> Close Cart' 
                 : '<i class="fas fa-shopping-cart"></i> View Cart';
         }
-        
-        // Prevent body scroll when cart is open
-        document.body.style.overflow = cartContainer.classList.contains('expanded') ? 'hidden' : '';
-        
-        // Add haptic feedback
-        if ('vibrate' in navigator) {
-            navigator.vibrate(50);
-        }
 
-        // Animate cart items
-        if (cartContainer.classList.contains('expanded')) {
-            const cartItems = cartContainer.querySelectorAll('.cart-item');
-            cartItems.forEach((item, index) => {
-                item.style.animationDelay = `${index * 0.1}s`;
-                item.style.opacity = '0';
-                item.style.transform = 'translateY(20px)';
-                
-                setTimeout(() => {
-                    item.style.transition = 'all 0.3s ease-out';
-                    item.style.opacity = '1';
-                    item.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
+        // Toggle main content layout
+        if (mainContent) {
+            if (cartContainer.classList.contains('expanded')) {
+                mainContent.style.display = 'grid';
+                mainContent.style.gridTemplateColumns = '1fr 2fr 1fr';
+            } else {
+                mainContent.style.display = 'grid';
+                mainContent.style.gridTemplateColumns = '1fr 2fr';
+            }
         }
     }
 }
@@ -454,7 +448,7 @@ function initializeResponsiveFeatures() {
     });
 
     // Add smooth transitions for mobile menu
-    const cartToggle = document.querySelector('.cart-toggle');
+    const cartToggle = document.querySelector('.cart-toggle-btn');
     if (cartToggle) {
         cartToggle.addEventListener('click', function() {
             const cartContainer = document.querySelector('.cart-container');
@@ -470,19 +464,6 @@ window.addEventListener('resize', function() {
     resizeTimer = setTimeout(function() {
         handleResponsiveLayout();
     }, 250);
-});
-
-// Close cart when clicking outside
-document.addEventListener('click', function(event) {
-    const cartContainer = document.querySelector('.cart-container');
-    const cartToggle = document.querySelector('.cart-toggle');
-    
-    if (cartContainer && cartToggle && 
-        !cartContainer.contains(event.target) && 
-        !cartToggle.contains(event.target) &&
-        cartContainer.classList.contains('expanded')) {
-        toggleCart();
-    }
 });
 
 // Close modal when clicking outside
@@ -657,4 +638,60 @@ document.addEventListener('touchstart', function() {}, {passive: true});
 document.addEventListener('touchend', function(event) {
     event.preventDefault();
     event.target.click();
-}, {passive: false}); 
+}, {passive: false});
+
+function addOrder() {
+    if (cart.length === 0) {
+        showNotification('Cart is empty', 'error');
+        return;
+    }
+
+    const orderData = {
+        items: cart.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            price: item.price
+        })),
+        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    };
+
+    // Show loading state
+    const addOrderBtn = document.querySelector('.add-order-btn');
+    if (addOrderBtn) {
+        const originalText = addOrderBtn.innerHTML;
+        addOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        addOrderBtn.disabled = true;
+    }
+
+    fetch('save_order.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Order added successfully!', 'success');
+            // Clear the cart after successful order
+            cart = [];
+            updateCart();
+            saveCart();
+            closeReceipt();
+        } else {
+            showNotification(data.message || 'Error adding order', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error adding order', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        if (addOrderBtn) {
+            addOrderBtn.innerHTML = originalText;
+            addOrderBtn.disabled = false;
+        }
+    });
+} 
