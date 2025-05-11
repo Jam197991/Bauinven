@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 // Database connection configuration
 $db_host = "localhost";
 $db_user = "root";
@@ -32,22 +34,6 @@ try {
     die("Database connection error: " . $e->getMessage());
 }
 
-// Handle status update
-if (isset($_POST['update_status'])) {
-    $order_id = $_POST['order_id'];
-    $new_status = $_POST['status'];
-    
-    $update_sql = "UPDATE orders SET status = ? WHERE order_id = ?";
-    $stmt = $conn->prepare($update_sql);
-    $stmt->bind_param("si", $new_status, $order_id);
-    
-    if ($stmt->execute()) {
-        $message = "Order status updated successfully!";
-    } else {
-        $error = "Error updating order status.";
-    }
-}
-
 // Get all orders with their items
 $orders_sql = "SELECT o.*, 
                       GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.product_name) SEPARATOR ', ') as items
@@ -64,7 +50,7 @@ $orders_result = $conn->query($orders_sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Order Management</title>
+    <title>Order Management - BauApp</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -128,40 +114,6 @@ $orders_result = $conn->query($orders_sql);
             color: #721c24;
         }
 
-        .status-select {
-            padding: 0.5rem;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            background: white;
-        }
-
-        .update-btn {
-            padding: 0.5rem 1rem;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .update-btn:hover {
-            background: var(--secondary-color);
-        }
-
-        .message {
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 5px;
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
         .admin-header {
             display: flex;
             align-items: center;
@@ -187,6 +139,17 @@ $orders_result = $conn->query($orders_sql);
             transform: translateX(-5px);
         }
 
+        .chef-only-notice {
+            background: #fff3cd;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
         @media (max-width: 768px) {
             .admin-header {
                 flex-direction: column;
@@ -208,14 +171,11 @@ $orders_result = $conn->query($orders_sql);
             </a>
             <h1><i class="fas fa-shopping-bag"></i> Order Management</h1>
         </div>
-        
-        <?php if (isset($message)): ?>
-            <div class="message"><?php echo $message; ?></div>
-        <?php endif; ?>
-        
-        <?php if (isset($error)): ?>
-            <div class="message error"><?php echo $error; ?></div>
-        <?php endif; ?>
+
+        <div class="chef-only-notice">
+            <i class="fas fa-info-circle"></i>
+            <span>Order status updates are managed by the chef. Please contact the chef for any status changes.</span>
+        </div>
 
         <table class="orders-table">
             <thead>
@@ -225,7 +185,6 @@ $orders_result = $conn->query($orders_sql);
                     <th>Items</th>
                     <th>Total Amount</th>
                     <th>Status</th>
-                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -239,39 +198,14 @@ $orders_result = $conn->query($orders_sql);
                         echo '<td>' . $order['items'] . '</td>';
                         echo '<td>₱' . number_format($order['total_amount'], 2) . '</td>';
                         echo '<td><span class="status-badge ' . $status_class . '">' . ucfirst($order['status']) . '</span></td>';
-                        echo '<td>
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="order_id" value="' . $order['order_id'] . '">
-                                    <select name="status" class="status-select">
-                                        <option value="pending"' . ($order['status'] == 'pending' ? ' selected' : '') . '>Pending</option>
-                                        <option value="processing"' . ($order['status'] == 'processing' ? ' selected' : '') . '>Processing</option>
-                                        <option value="completed"' . ($order['status'] == 'completed' ? ' selected' : '') . '>Completed</option>
-                                        <option value="cancelled"' . ($order['status'] == 'cancelled' ? ' selected' : '') . '>Cancelled</option>
-                                    </select>
-                                    <button type="submit" name="update_status" class="update-btn">
-                                        <i class="fas fa-save"></i> Update
-                                    </button>
-                                </form>
-                            </td>';
                         echo '</tr>';
                     }
                 } else {
-                    echo '<tr><td colspan="6" style="text-align: center;">No orders found</td></tr>';
+                    echo '<tr><td colspan="5" style="text-align: center;">No orders found</td></tr>';
                 }
                 ?>
             </tbody>
         </table>
     </div>
-
-    <script>
-        // Add confirmation before updating status
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                if (!confirm('Are you sure you want to update this order\'s status?')) {
-                    e.preventDefault();
-                }
-            });
-        });
-    </script>
 </body>
 </html> 

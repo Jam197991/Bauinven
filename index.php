@@ -144,9 +144,222 @@
                 content: '...';
             }
         }
+
+        .chef-login {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .chef-login-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+            text-decoration: none;
+        }
+
+        .chef-login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .chef-login-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chef-login-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .chef-login-form h2 {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .chef-login-submit {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+        }
+
+        .chef-login-submit:hover {
+            background: var(--accent-color);
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+
+        .chef-login-modal .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .chef-login-modal .loading-overlay.active {
+            opacity: 1;
+        }
+
+        .chef-login-modal .loading-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chef-login-modal .loading-leaf {
+            position: absolute;
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease;
+        }
+
+        .chef-login-modal .loading-leaf.main {
+            font-size: 3.5rem;
+            animation: mainLeafSpin 2s infinite ease-in-out;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .chef-login-modal .loading-leaf.orbit {
+            animation: orbitLeaf 3s infinite linear;
+        }
+
+        .chef-login-modal .loading-leaf.orbit:nth-child(2) {
+            animation-delay: -1s;
+        }
+
+        .chef-login-modal .loading-leaf.orbit:nth-child(3) {
+            animation-delay: -2s;
+        }
+
+        .chef-login-modal .loading-text {
+            margin-top: 2rem;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .chef-login-modal .loading-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chef-login-modal .loading-dots {
+            display: inline-block;
+            animation: loadingDots 1.5s infinite;
+        }
     </style>
 </head>
 <body>
+    <div class="chef-login">
+        <button class="chef-login-btn" onclick="showChefLogin()">
+            <i class="fas fa-utensils"></i> Chef Login
+        </button>
+    </div>
+
+    <div class="chef-login-modal" id="chefLoginModal">
+        <div class="chef-login-form">
+            <h2><i class="fas fa-utensils"></i> Chef Login</h2>
+            <form id="chefLoginForm" action="chef_login.php" method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="chef-login-submit">Login</button>
+                <div class="error-message" id="loginError"></div>
+            </form>
+            <div class="loading-overlay">
+                <div class="loading-container">
+                    <i class="fas fa-leaf loading-leaf main"></i>
+                    <i class="fas fa-leaf loading-leaf orbit"></i>
+                    <i class="fas fa-leaf loading-leaf orbit"></i>
+                    <i class="fas fa-leaf loading-leaf orbit"></i>
+                </div>
+                <div class="loading-text">Logging in<span class="loading-dots">...</span></div>
+            </div>
+        </div>
+    </div>
+
     <div class="loading-overlay">
         <div class="loading-container">
             <i class="fas fa-leaf loading-leaf main"></i>
@@ -223,6 +436,74 @@
             setTimeout(() => {
                 window.location.href = 'dashboard.php';
             }, 2000);
+        });
+
+        function showChefLogin() {
+            const modal = document.getElementById('chefLoginModal');
+            modal.style.display = 'flex';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('chefLoginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // Chef login form submission
+        document.getElementById('chefLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const errorMessage = form.querySelector('.error-message');
+            const loadingOverlay = form.parentElement.querySelector('.loading-overlay');
+            const loadingText = loadingOverlay.querySelector('.loading-text');
+            
+            // Show loading animation
+            loadingOverlay.style.display = 'flex';
+            setTimeout(() => {
+                loadingOverlay.classList.add('active');
+                loadingText.classList.add('active');
+            }, 50);
+
+            const formData = new FormData(form);
+            
+            fetch('chef_login.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide loading animation
+                    loadingOverlay.classList.remove('active');
+                    loadingText.classList.remove('active');
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        // Redirect to chef dashboard
+                        window.location.href = 'chef.php';
+                    }, 300);
+                } else {
+                    // Hide loading animation
+                    loadingOverlay.classList.remove('active');
+                    loadingText.classList.remove('active');
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        errorMessage.textContent = data.message;
+                        errorMessage.style.display = 'block';
+                    }, 300);
+                }
+            })
+            .catch(error => {
+                // Hide loading animation
+                loadingOverlay.classList.remove('active');
+                loadingText.classList.remove('active');
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    errorMessage.textContent = 'An error occurred. Please try again.';
+                    errorMessage.style.display = 'block';
+                }, 300);
+            });
         });
     </script>
 </body>
