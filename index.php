@@ -8,6 +8,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #2e7d32;
+            --accent-color: #4caf50;
+            --text-color: #333;
+            --background-color: #f5f5f5;
+            --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            --transition-speed: 0.3s;
+        }
+
         .loading-overlay {
             display: none;
             position: fixed;
@@ -40,7 +50,7 @@
         .loading-leaf {
             position: absolute;
             font-size: 2.5rem;
-            color: var(--primary-color);
+            color: #2e7d32;
             opacity: 0;
             transform: scale(0.5);
             transition: all 0.3s ease;
@@ -67,7 +77,7 @@
 
         .loading-text {
             margin-top: 2rem;
-            color: var(--primary-color);
+            color: #2e7d32;
             font-size: 1.2rem;
             font-weight: 500;
             opacity: 0;
@@ -105,7 +115,7 @@
         .loading-progress-bar {
             width: 0%;
             height: 100%;
-            background: var(--primary-color);
+            background: #2e7d32;
             border-radius: 2px;
             transition: width 1.5s ease;
         }
@@ -360,7 +370,7 @@
         </div>
     </div>
 
-    <div class="loading-overlay">
+    <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-container">
             <i class="fas fa-leaf loading-leaf main"></i>
             <i class="fas fa-leaf loading-leaf orbit"></i>
@@ -416,26 +426,30 @@
     </div>
     <script src="js/script.js"></script>
     <script>
-        document.querySelector('.welcome-btn').addEventListener('click', function(e) {
-            e.preventDefault();
-            const loadingOverlay = document.querySelector('.loading-overlay');
-            const loadingText = document.querySelector('.loading-text');
-            const loadingProgress = document.querySelector('.loading-progress');
-            const progressBar = document.querySelector('.loading-progress-bar');
-            
-            // Show loading overlay with fade effect
-            loadingOverlay.style.display = 'flex';
-            setTimeout(() => {
-                loadingOverlay.classList.add('active');
-                loadingText.classList.add('active');
-                loadingProgress.classList.add('active');
-                progressBar.style.width = '100%';
-            }, 50);
-            
-            // Redirect after animation
-            setTimeout(() => {
-                window.location.href = 'dashboard.php';
-            }, 2000);
+        document.addEventListener('DOMContentLoaded', function() {
+            const welcomeBtn = document.querySelector('.welcome-btn');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingText = loadingOverlay.querySelector('.loading-text');
+            const loadingProgress = loadingOverlay.querySelector('.loading-progress');
+            const progressBar = loadingOverlay.querySelector('.loading-progress-bar');
+
+            welcomeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Show loading overlay with fade effect
+                loadingOverlay.style.display = 'flex';
+                setTimeout(() => {
+                    loadingOverlay.classList.add('active');
+                    loadingText.classList.add('active');
+                    loadingProgress.classList.add('active');
+                    progressBar.style.width = '100%';
+                }, 50);
+                
+                // Redirect after animation
+                setTimeout(() => {
+                    window.location.href = 'dashboard.php';
+                }, 2000);
+            });
         });
 
         function showChefLogin() {
