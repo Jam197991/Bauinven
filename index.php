@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BauApp Ordering System</title>
+    <link href="img/leaf.png" rel="icon">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -160,6 +161,8 @@
             top: 20px;
             right: 20px;
             z-index: 100;
+            display: flex;
+            gap: 1rem;
         }
 
         .chef-login-btn {
@@ -334,12 +337,17 @@
             display: inline-block;
             animation: loadingDots 1.5s infinite;
         }
+
+        
     </style>
 </head>
 <body>
     <div class="chef-login">
         <button class="chef-login-btn" onclick="showChefLogin()">
             <i class="fas fa-utensils"></i> Chef Login
+        </button>
+        <button class="chef-login-btn inventory-btn" onclick="showInventoryLogin()">
+            <i class="fas fa-boxes"></i> Inventory Login
         </button>
     </div>
 
@@ -357,6 +365,33 @@
                 </div>
                 <button type="submit" class="chef-login-submit">Login</button>
                 <div class="error-message" id="loginError"></div>
+            </form>
+            <div class="loading-overlay">
+                <div class="loading-container">
+                    <i class="fas fa-leaf loading-leaf main"></i>
+                    <i class="fas fa-leaf loading-leaf orbit"></i>
+                    <i class="fas fa-leaf loading-leaf orbit"></i>
+                    <i class="fas fa-leaf loading-leaf orbit"></i>
+                </div>
+                <div class="loading-text">Logging in<span class="loading-dots">...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chef-login-modal" id="inventoryLoginModal">
+        <div class="chef-login-form">
+            <h2><i class="fas fa-boxes"></i> Inventory Login</h2>
+            <form id="inventoryLoginForm" action="inventory_login.php" method="POST">
+                <div class="form-group">
+                    <label for="inv_username">Username</label>
+                    <input type="text" id="inv_username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="inv_password">Password</label>
+                    <input type="password" id="inv_password" name="password" required>
+                </div>
+                <button type="submit" class="chef-login-submit">Login</button>
+                <div class="error-message" id="invLoginError"></div>
             </form>
             <div class="loading-overlay">
                 <div class="loading-container">
@@ -496,6 +531,74 @@
                         loadingOverlay.style.display = 'none';
                         // Redirect to chef dashboard
                         window.location.href = 'chef.php';
+                    }, 300);
+                } else {
+                    // Hide loading animation
+                    loadingOverlay.classList.remove('active');
+                    loadingText.classList.remove('active');
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        errorMessage.textContent = data.message;
+                        errorMessage.style.display = 'block';
+                    }, 300);
+                }
+            })
+            .catch(error => {
+                // Hide loading animation
+                loadingOverlay.classList.remove('active');
+                loadingText.classList.remove('active');
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    errorMessage.textContent = 'An error occurred. Please try again.';
+                    errorMessage.style.display = 'block';
+                }, 300);
+            });
+        });
+
+        function showInventoryLogin() {
+            const modal = document.getElementById('inventoryLoginModal');
+            modal.style.display = 'flex';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('inventoryLoginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // Inventory login form submission
+        document.getElementById('inventoryLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const errorMessage = form.querySelector('.error-message');
+            const loadingOverlay = form.parentElement.querySelector('.loading-overlay');
+            const loadingText = loadingOverlay.querySelector('.loading-text');
+            
+            // Show loading animation
+            loadingOverlay.style.display = 'flex';
+            setTimeout(() => {
+                loadingOverlay.classList.add('active');
+                loadingText.classList.add('active');
+            }, 50);
+
+            const formData = new FormData(form);
+            
+            fetch('inventory_login.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide loading animation
+                    loadingOverlay.classList.remove('active');
+                    loadingText.classList.remove('active');
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        // Redirect to inventory dashboard
+                        window.location.href = 'inventory.php';
                     }, 300);
                 } else {
                     // Hide loading animation
