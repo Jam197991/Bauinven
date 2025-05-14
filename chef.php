@@ -1,13 +1,14 @@
 <?php
 session_start();
 
+include 'includes/database.php';
 // Check if user is logged in and is a chef
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'chef') {
     header('Location: index.php');
     exit();
 }
 
-$conn = new mysqli("localhost", "root", "", "bauapp_db");
+
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);

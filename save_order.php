@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/database.php';
+include 'includes/database.php';
 
 // Set header to return JSON
 header('Content-Type: application/json');

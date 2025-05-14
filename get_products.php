@@ -1,9 +1,6 @@
 <?php
-// Database connection configuration
-$db_host = "localhost";
-$db_user = "root";
-$db_pass = "";
-$db_name = "bauapp_db";
+
+include 'includes/database.php';
 
 // Function to establish database connection with retry
 function connectDB($host, $user, $pass, $dbname, $max_retries = 3) {

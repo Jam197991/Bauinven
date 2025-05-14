@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/database.php';
+include 'includes/database.php';
 
 // Get cart items from session or database
 $cart_items = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];

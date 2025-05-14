@@ -338,7 +338,19 @@
             animation: loadingDots 1.5s infinite;
         }
 
-        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -380,8 +392,15 @@
 
     <div class="chef-login-modal" id="inventoryLoginModal">
         <div class="chef-login-form">
-            <h2><i class="fas fa-boxes"></i> Inventory Login</h2>
-            <form id="inventoryLoginForm" action="inventory_login.php" method="POST">
+            <h2><i class="fas fa-boxes"></i> Login</h2>
+            <form id="inventoryLoginForm" action="inv_login.php" method="POST">
+                <div class="form-group">
+                    <label for="userType">Login As</label>
+                    <select id="userType" name="userType" class="form-control" required>
+                        <option value="Administrator">Administrator</option>
+                        <option value="Inventory">Inventory Staff</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label for="inv_username">Username</label>
                     <input type="text" id="inv_username" name="username" required>
@@ -390,6 +409,7 @@
                     <label for="inv_password">Password</label>
                     <input type="password" id="inv_password" name="password" required>
                 </div>
+                <input type="hidden" name="login" value="1">
                 <button type="submit" class="chef-login-submit">Login</button>
                 <div class="error-message" id="invLoginError"></div>
             </form>
@@ -585,7 +605,7 @@
 
             const formData = new FormData(form);
             
-            fetch('inventory_login.php', {
+            fetch('inv_login.php', {
                 method: 'POST',
                 body: formData
             })
@@ -597,8 +617,8 @@
                     loadingText.classList.remove('active');
                     setTimeout(() => {
                         loadingOverlay.style.display = 'none';
-                        // Redirect to inventory dashboard
-                        window.location.href = 'inventory.php';
+                        // Redirect to appropriate dashboard
+                        window.location.href = data.redirect;
                     }, 300);
                 } else {
                     // Hide loading animation
