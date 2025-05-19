@@ -356,16 +356,13 @@
 <body>
     <div class="chef-login">
         <button class="chef-login-btn" onclick="showChefLogin()">
-            <i class="fas fa-utensils"></i> Chef Login
-        </button>
-        <button class="chef-login-btn inventory-btn" onclick="showInventoryLogin()">
-            <i class="fas fa-boxes"></i> Inventory Login
+            <i class="fas fa-utensils"></i>Login
         </button>
     </div>
 
     <div class="chef-login-modal" id="chefLoginModal">
         <div class="chef-login-form">
-            <h2><i class="fas fa-utensils"></i> Chef Login</h2>
+            <h2><i class="fas fa-utensils"></i> Login</h2>
             <form id="chefLoginForm" action="chef_login.php" method="POST">
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -377,41 +374,6 @@
                 </div>
                 <button type="submit" class="chef-login-submit">Login</button>
                 <div class="error-message" id="loginError"></div>
-            </form>
-            <div class="loading-overlay">
-                <div class="loading-container">
-                    <i class="fas fa-leaf loading-leaf main"></i>
-                    <i class="fas fa-leaf loading-leaf orbit"></i>
-                    <i class="fas fa-leaf loading-leaf orbit"></i>
-                    <i class="fas fa-leaf loading-leaf orbit"></i>
-                </div>
-                <div class="loading-text">Logging in<span class="loading-dots">...</span></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="chef-login-modal" id="inventoryLoginModal">
-        <div class="chef-login-form">
-            <h2><i class="fas fa-boxes"></i> Login</h2>
-            <form id="inventoryLoginForm" action="inv_login.php" method="POST">
-                <div class="form-group">
-                    <label for="userType">Login As</label>
-                    <select id="userType" name="userType" class="form-control" required>
-                        <option value="Administrator">Administrator</option>
-                        <option value="Inventory">Inventory Staff</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="inv_username">Username</label>
-                    <input type="text" id="inv_username" name="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="inv_password">Password</label>
-                    <input type="password" id="inv_password" name="password" required>
-                </div>
-                <input type="hidden" name="login" value="1">
-                <button type="submit" class="chef-login-submit">Login</button>
-                <div class="error-message" id="invLoginError"></div>
             </form>
             <div class="loading-overlay">
                 <div class="loading-container">
@@ -480,6 +442,79 @@
         </div>
     </div>
     <script src="js/script.js"></script>
+
+    <script>
+        // Function to show the login modal
+        function showChefLogin() {
+            document.getElementById('chefLoginModal').style.display = 'flex';
+        }
+        
+        // Close the modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('chefLoginModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                // Reset form and error message when closing
+                document.getElementById('chefLoginForm').reset();
+                document.getElementById('loginError').textContent = '';
+            }
+        };
+        
+        // Handle form submission
+        document.getElementById('chefLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading animation
+            const loadingOverlay = this.parentElement.querySelector('.loading-overlay');
+            const loadingText = loadingOverlay.querySelector('.loading-text');
+            loadingOverlay.style.display = 'flex';
+            setTimeout(() => {
+                loadingOverlay.classList.add('active');
+                loadingText.classList.add('active');
+            }, 50);
+            
+            const formData = new FormData(this);
+            
+            // Send login request to server
+            fetch('chef_login.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading animation
+                loadingOverlay.classList.remove('active');
+                loadingText.classList.remove('active');
+                
+                if (data.success) {
+                    // Login successful - redirect to appropriate dashboard
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        window.location.href = data.redirect;
+                    }, 300);
+                } else {
+                    // Login failed
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        document.getElementById('loginError').textContent = data.message || 'Login failed. Please try again.';
+                        document.getElementById('loginError').style.display = 'block';
+                    }, 300);
+                }
+            })
+            .catch(error => {
+                // Hide loading animation and show error
+                loadingOverlay.classList.remove('active');
+                loadingText.classList.remove('active');
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    document.getElementById('loginError').textContent = 'An error occurred. Please try again later.';
+                    document.getElementById('loginError').style.display = 'block';
+                }, 300);
+                console.error('Error:', error);
+            });
+        });
+    </script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const welcomeBtn = document.querySelector('.welcome-btn');
@@ -517,62 +552,6 @@
             if (e.target === this) {
                 this.style.display = 'none';
             }
-        });
-
-        // Chef login form submission
-        document.getElementById('chefLoginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const form = this;
-            const errorMessage = form.querySelector('.error-message');
-            const loadingOverlay = form.parentElement.querySelector('.loading-overlay');
-            const loadingText = loadingOverlay.querySelector('.loading-text');
-            
-            // Show loading animation
-            loadingOverlay.style.display = 'flex';
-            setTimeout(() => {
-                loadingOverlay.classList.add('active');
-                loadingText.classList.add('active');
-            }, 50);
-
-            const formData = new FormData(form);
-            
-            fetch('chef_login.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Hide loading animation
-                    loadingOverlay.classList.remove('active');
-                    loadingText.classList.remove('active');
-                    setTimeout(() => {
-                        loadingOverlay.style.display = 'none';
-                        // Redirect to chef dashboard
-                        window.location.href = 'chef.php';
-                    }, 300);
-                } else {
-                    // Hide loading animation
-                    loadingOverlay.classList.remove('active');
-                    loadingText.classList.remove('active');
-                    setTimeout(() => {
-                        loadingOverlay.style.display = 'none';
-                        errorMessage.textContent = data.message;
-                        errorMessage.style.display = 'block';
-                    }, 300);
-                }
-            })
-            .catch(error => {
-                // Hide loading animation
-                loadingOverlay.classList.remove('active');
-                loadingText.classList.remove('active');
-                setTimeout(() => {
-                    loadingOverlay.style.display = 'none';
-                    errorMessage.textContent = 'An error occurred. Please try again.';
-                    errorMessage.style.display = 'block';
-                }, 300);
-            });
         });
 
         function showInventoryLogin() {
