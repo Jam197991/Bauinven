@@ -185,6 +185,14 @@
             box-shadow: var(--hover-shadow);
         }
 
+        .inventory-login-btn {
+            background: #FF9800;
+        }
+
+        .inventory-login-btn:hover {
+            background: #F57C00;
+        }
+
         .chef-login-modal {
             display: none;
             position: fixed;
@@ -355,9 +363,14 @@
 </head>
 <body>
     <div class="chef-login">
-        <button class="chef-login-btn" onclick="showChefLogin()">
-            <i class="fas fa-utensils"></i>Login
-        </button>
+        <a href="chef_login.php" class="chef-login-btn">
+            <i class="fas fa-utensils"></i>
+            Chef Login
+        </a>
+        <a href="inventory/login.php" class="chef-login-btn inventory-login-btn">
+            <i class="fas fa-boxes"></i>
+            Inventory Staff
+        </a>
     </div>
 
     <div class="chef-login-modal" id="chefLoginModal">
