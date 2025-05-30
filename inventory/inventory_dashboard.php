@@ -4,16 +4,24 @@ require_once '../includes/config.php';
 
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+if (!isset($_SESSION['staff_id'])) {
+    header("Location: ../login.php");
     exit();
 }
 
-$query = "SELECT * FROM user WHERE user_id = ".$_SESSION['user_id']."";
-$rs = $connection->query($query);
-$num = $rs->num_rows;
-$rows = $rs->fetch_assoc();
-$fullName = $rows['firstname']." ".$rows['lastname'];
+$query = "SELECT * FROM inventory_staff WHERE staff_id = ?";
+$stmt = $connection->prepare($query);
+$stmt->bind_param("i", $_SESSION['staff_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+$staff = $result->fetch_assoc();
+
+if (!$staff) {
+    header("Location: ../login.php");
+    exit();
+}
+
+$fullName = $staff['username']; // Since we don't have firstname/lastname in inventory_staff table
 
 // Get active section from URL parameter, default to categories
 $active_section = isset($_GET['section']) ? $_GET['section'] : 'categories';

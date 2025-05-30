@@ -22,13 +22,12 @@ $error = ''; // Initialize error variable
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
-    $password = md5($_POST['password']); 
+    $password = $_POST['password']; 
 
-    // Debug: Check if username and password are received
-    if (empty($username) || empty($_POST['password'])) {
+    if (empty($username) || empty($password)) {
         $error = 'Please enter both username and password.';
     } else {
-        $sql = "SELECT * FROM user WHERE username = ? AND password = ? LIMIT 1";
+        $sql = "SELECT * FROM inventory_staff WHERE username = ? AND password = ? LIMIT 1";
         $stmt = $connection->prepare($sql);
         $stmt->bind_param("ss", $username, $password);
         $stmt->execute();
@@ -36,24 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
+            $_SESSION['staff_id'] = $row['staff_id'];
             $_SESSION['username'] = $row['username'];
-            $_SESSION['user_id'] = $row['user_id'];
             $_SESSION['role'] = $row['role'];
 
-            // Update last_login
-            $update_login = "UPDATE user SET last_login = NOW() WHERE user_id = ?";
-            $update_stmt = $connection->prepare($update_login);
-            $update_stmt->bind_param("i", $row['user_id']);
-            $update_stmt->execute();
-
-            // Redirect based on user type
-            if ($_SESSION['role'] == 'Admin') {
-                header('Location: inventory/inventory_dashboard.php?user_id=' . $_SESSION['user_id']);
-            } elseif ($_SESSION['role'] == 'Chef') {
-                header('Location: chef/dashboard.php?user_id=' . $_SESSION['user_id']);
-            } else {
-                $error = 'Invalid user role: ' . $_SESSION['role'];
-            }
+            // Redirect to inventory dashboard
+            header('Location: inventory/inventory_dashboard.php');
             exit();
         } else {
             $error = 'Invalid username or password. Please try again.';
