@@ -367,7 +367,7 @@
             <i class="fas fa-utensils"></i>
             Chef Login
         </a>
-        <a href="inventory/login.php" class="chef-login-btn inventory-login-btn">
+        <a href="login.php" class="chef-login-btn inventory-login-btn">
             <i class="fas fa-boxes"></i>
             Inventory Staff
         </a>

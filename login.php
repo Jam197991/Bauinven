@@ -2,11 +2,11 @@
 session_start();
 
 // Check if config file exists
-if (!file_exists('../includes/config.php')) {
+if (!file_exists('includes/config.php')) {
     die('Configuration file not found. Please check the file path.');
 }
-
-require_once '../includes/config.php';
+    
+require_once 'includes/config.php';
 
 // Check if connection variable exists
 if (!isset($connection)) {
@@ -21,44 +21,43 @@ if ($connection->connect_error) {
 $error = ''; // Initialize error variable
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    $username = trim($_POST['username']);
+    $password = md5($_POST['password']); 
 
-    $sql = "SELECT * FROM user WHERE username = ? LIMIT 1";
-    $stmt = $connection->prepare($sql);
-    
-    if (!$stmt) {
-        $error = 'Database query preparation failed: ' . $connection->error;
+    // Debug: Check if username and password are received
+    if (empty($username) || empty($_POST['password'])) {
+        $error = 'Please enter both username and password.';
     } else {
-        $stmt->bind_param("s", $username);
+        $sql = "SELECT * FROM user WHERE username = ? AND password = ? LIMIT 1";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param("ss", $username, $password);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
-            $hashed_password = $row['password'];
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['user_id'] = $row['user_id'];
+            $_SESSION['role'] = $row['role'];
 
-            if (password_verify($password, $hashed_password)) {
-                $_SESSION['username'] = $row['username'];
-                $_SESSION['id'] = $row['id'];
-                $_SESSION['role'] = $row['role'];
+            // Update last_login
+            $update_login = "UPDATE user SET last_login = NOW() WHERE user_id = ?";
+            $update_stmt = $connection->prepare($update_login);
+            $update_stmt->bind_param("i", $row['user_id']);
+            $update_stmt->execute();
 
-                // Redirect based on user type
-                if ($_SESSION['role'] == 'Admin') {
-                    header('Location: inventory/inventory_dashboard.php?user_id=' . $_SESSION['id']);
-                } elseif ($_SESSION['role'] == 'Chef') {
-                    header('Location: dashboard.php?user_id=' . $_SESSION['id']);
-                } else {
-                    $error = 'Invalid user type value';
-                }
-                exit();
+            // Redirect based on user type
+            if ($_SESSION['role'] == 'Admin') {
+                header('Location: inventory/inventory_dashboard.php?user_id=' . $_SESSION['user_id']);
+            } elseif ($_SESSION['role'] == 'Chef') {
+                header('Location: chef/dashboard.php?user_id=' . $_SESSION['user_id']);
             } else {
-                $error = 'Incorrect Password';
+                $error = 'Invalid user role: ' . $_SESSION['role'];
             }
+            exit();
         } else {
-            $error = 'Incorrect Username';
+            $error = 'Invalid username or password. Please try again.';
         }
-        $stmt->close();
     }
 }
 ?>
@@ -69,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory Staff Login - BauApp</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -217,6 +216,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             gap: 8px;
         }
 
+        .debug-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 0.8rem;
+            font-family: monospace;
+        }
+
         @media (max-width: 480px) {
             .login-container {
                 margin: 15px;
@@ -249,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" action="">
             <div class="form-group">
-                <input type="text" name="username" placeholder="Username" required>
+                <input type="text" name="username" placeholder="Username" required value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
                 <i class="fas fa-user"></i>
             </div>
             <div class="form-group">
@@ -262,10 +271,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </button>
         </form>
 
-        <a href="../index.php" class="back-link">
+        <a href="index.php" class="back-link">
             <i class="fas fa-arrow-left"></i>
             Back to Home
         </a>
+
+        
     </div>
 </body>
 </html>

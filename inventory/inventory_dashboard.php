@@ -2,18 +2,26 @@
 session_start();
 require_once '../includes/config.php';
 
+
 // Check if user is logged in
-if (!isset($_SESSION['inventory_staff_id'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
+$query = "SELECT * FROM user WHERE user_id = ".$_SESSION['user_id']."";
+$rs = $connection->query($query);
+$num = $rs->num_rows;
+$rows = $rs->fetch_assoc();
+$fullName = $rows['firstname']." ".$rows['lastname'];
+
 // Get active section from URL parameter, default to categories
 $active_section = isset($_GET['section']) ? $_GET['section'] : 'categories';
 
+
 // Get categories
 $categories_sql = "SELECT * FROM categories ORDER BY category_name";
-$categories_result = $conn->query($categories_sql);
+$categories_result = $connection->query($categories_sql);
 
 // Get inventory items
 $items_sql = "SELECT i.*, c.category_name, s.supplier_name 
@@ -21,11 +29,11 @@ $items_sql = "SELECT i.*, c.category_name, s.supplier_name
               LEFT JOIN categories c ON i.category_id = c.category_id 
               LEFT JOIN suppliers s ON i.supplier_id = s.supplier_id 
               ORDER BY i.item_name";
-$items_result = $conn->query($items_sql);
+$items_result = $connection->query($items_sql);
 
 // Get suppliers
 $suppliers_sql = "SELECT * FROM suppliers ORDER BY supplier_name";
-$suppliers_result = $conn->query($suppliers_sql);
+$suppliers_result = $connection->query($suppliers_sql);
 ?>
 
 <!DOCTYPE html>
@@ -583,7 +591,7 @@ $suppliers_result = $conn->query($suppliers_sql);
                     <i class="fas fa-bars"></i>
                 </div>
                 <div class="user-info">
-                    <span>Welcome, <?php echo htmlspecialchars($_SESSION['inventory_username']); ?></span>
+                <span>Welcome <?php echo htmlspecialchars($fullName); ?></span>
                     <a href="logout.php" class="logout-btn">
                         <i class="fas fa-power-off"></i>
                         <span>Logout</span>
