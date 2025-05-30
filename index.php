@@ -363,7 +363,7 @@
 </head>
 <body>
     <div class="chef-login">
-        <a href="chef_login.php" class="chef-login-btn">
+        <a href="#" onclick="showChefLogin(); return false;" class="chef-login-btn">
             <i class="fas fa-utensils"></i>
             Chef Login
         </a>
@@ -500,28 +500,30 @@
                 loadingText.classList.remove('active');
                 
                 if (data.success) {
-                    // Login successful - redirect to appropriate dashboard
+                    // Login successful - redirect to chef.php
                     setTimeout(() => {
                         loadingOverlay.style.display = 'none';
-                        window.location.href = data.redirect;
+                        window.location.href = 'chef.php';
                     }, 300);
                 } else {
                     // Login failed
                     setTimeout(() => {
                         loadingOverlay.style.display = 'none';
-                        document.getElementById('loginError').textContent = data.message || 'Login failed. Please try again.';
-                        document.getElementById('loginError').style.display = 'block';
+                        const errorMessage = document.getElementById('loginError');
+                        errorMessage.textContent = data.message || 'Login failed. Please try again.';
+                        errorMessage.style.display = 'block';
                     }, 300);
                 }
             })
             .catch(error => {
-                // Hide loading animation and show error
+                // Hide loading animation
                 loadingOverlay.classList.remove('active');
                 loadingText.classList.remove('active');
                 setTimeout(() => {
                     loadingOverlay.style.display = 'none';
-                    document.getElementById('loginError').textContent = 'An error occurred. Please try again later.';
-                    document.getElementById('loginError').style.display = 'block';
+                    const errorMessage = document.getElementById('loginError');
+                    errorMessage.textContent = 'An error occurred. Please try again.';
+                    errorMessage.style.display = 'block';
                 }, 300);
                 console.error('Error:', error);
             });

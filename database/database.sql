@@ -82,4 +82,17 @@ INSERT INTO products (product_name, description, price, category_id, image_url) 
 -- Organic Products
 ('Organic Rice', 'Premium quality organic rice', 249.99, 6, 'images/products/rice.jpg'),
 ('Local Honey', 'Pure honey from local beekeepers', 199.99, 6, 'images/products/honey.jpg'),
-('Organic Coffee', 'Fresh ground organic coffee', 299.99, 6, 'images/products/coffee.jpg'); 
+('Organic Coffee', 'Fresh ground organic coffee', 299.99, 6, 'images/products/coffee.jpg');
+
+DROP TABLE IF EXISTS users;
+CREATE TABLE `users` (
+  `user_id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(50) NOT NULL,
+  `role` enum('cashier','chef') NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `users` (`username`, `password`, `role`) VALUES ('chef', 'chef143', 'chef'); 

@@ -15,24 +15,37 @@ if (empty($username) || empty($password)) {
     exit();
 }
 
-$stmt = $conn->prepare("SELECT user_id, username, role FROM users WHERE username = ? AND role = 'chef'");
+// Debug information
+error_log("Attempting login for username: " . $username);
+
+$stmt = $conn->prepare("SELECT user_id, username, role, password FROM users WHERE username = ? AND role = 'chef'");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 1) {
     $user = $result->fetch_assoc();
-    // For demo purposes, we're using a hardcoded password
-    // In a real application, you should use password_hash() and password_verify()
-    if ($password === 'bauland') {
+    
+    // Debug information
+    error_log("Found user: " . print_r($user, true));
+    
+    if ($password === $user['password']) {
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['role'] = $user['role'];
-        echo json_encode(['success' => true, 'message' => 'Login successful']);
+        
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Login successful',
+            'redirect' => 'chef.php'
+        ]);
+        exit();
     } else {
+        error_log("Password mismatch. Entered: " . $password . ", Stored: " . $user['password']);
         echo json_encode(['success' => false, 'message' => 'Invalid password']);
     }
 } else {
+    error_log("No user found with username: " . $username);
     echo json_encode(['success' => false, 'message' => 'Invalid username or role']);
 }
 

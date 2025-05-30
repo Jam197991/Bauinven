@@ -122,7 +122,7 @@ INSERT INTO `products` (`product_id`, `product_name`, `description`, `price`, `c
 CREATE TABLE `users` (
   `user_id` int(11) NOT NULL,
   `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `password` varchar(50) NOT NULL,
   `role` enum('cashier','chef') NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -132,7 +132,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `username`, `password`, `role`) VALUES
-(1, 'chef', '$2y$10$8K1p/a0dR1Ux5Y5Y5Y5Y5O5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y', 'chef');
+(1, 'chef', 'chef143', 'chef');
 
 --
 -- Indexes for dumped tables
