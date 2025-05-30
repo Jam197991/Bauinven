@@ -24,7 +24,7 @@ $success = ''; // Initialize success variable
 //Add users
 function isUsernameAvailable($username, $connection)
 {
-    $sql = "SELECT COUNT(*) as count FROM user WHERE username = ?";
+    $sql = "SELECT COUNT(*) as count FROM inventory_staff WHERE username = ?";
     $stmt = $connection->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -34,7 +34,7 @@ function isUsernameAvailable($username, $connection)
 }
 
 if (isset($_POST['submit'])) {
-    $user_id = $_POST['user_id'];
+    $staff_id = $_POST['staff_id'];
     $firstname = $_POST['firstname'];
     $lastname = $_POST['lastname'];
     $username = $_POST['username'];
@@ -44,9 +44,9 @@ if (isset($_POST['submit'])) {
     if (!isUsernameAvailable($username, $connection)) {
         $error = "Username is not available. Please choose a different one.";
     } else {
-        $sql = "INSERT INTO user (user_id, firstname, lastname, username, password, role) VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO inventory_staff (staff_id, firstname, lastname, username, password, role) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $connection->prepare($sql);
-        $stmt->bind_param("isssss", $user_id, $firstname, $lastname, $username, $password, $role);
+        $stmt->bind_param("isssss", $staff_id, $firstname, $lastname, $username, $password, $role);
 
         if ($stmt->execute()) {
             $success = "User registered successfully!";
@@ -59,10 +59,10 @@ if (isset($_POST['submit'])) {
 }
 
 // retrieve users
-$roles = ['Admin', 'Chef'];
+$roles = ['Staff'];
 $roles_str = "'" . implode("', '", $roles) . "'";
 
-$select = mysqli_query($connection, "SELECT * FROM user WHERE role IN ($roles_str)");
+$select = mysqli_query($connection, "SELECT * FROM inventory_staff WHERE role IN ($roles_str)");
 ?>
 
 <!DOCTYPE html>
@@ -265,8 +265,7 @@ $select = mysqli_query($connection, "SELECT * FROM user WHERE role IN ($roles_st
                     <label for="role"><i class="fas fa-user-tag"></i> Role:</label>
                     <select id="role" name="role" required>
                         <option value="">Select Role</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Chef">Chef</option>
+                        <option value="Staff">Staff</option>
                     </select>
                 </div>
 
@@ -292,7 +291,7 @@ $select = mysqli_query($connection, "SELECT * FROM user WHERE role IN ($roles_st
                 if ($select && mysqli_num_rows($select) > 0) {
                     while ($row = mysqli_fetch_assoc($select)) {
                         echo "<tr>
-                                <td>" . htmlspecialchars($row['user_id']) . "</td>
+                                <td>" . htmlspecialchars($row['staff_id']) . "</td>
                                 <td>" . htmlspecialchars($row['firstname']) . "</td>
                                 <td>" . htmlspecialchars($row['lastname']) . "</td>
                                 <td>" . htmlspecialchars($row['username']) . "</td>
