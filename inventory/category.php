@@ -1,0 +1,361 @@
+<?php
+session_start();
+include '../includes/database.php';
+
+// Handle form submissions
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['add_category'])) {
+        $category_name = $_POST['category_name'];
+        $category_type = $_POST['category_type'];
+        
+        // Handle image upload
+        $target_dir = "../uploads/categories/";
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+        
+        $image_url = "";
+        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+            $target_file = $target_dir . time() . '_' . basename($_FILES['image']['name']);
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+                $image_url = $target_file;
+            }
+        }
+        
+        $sql = "INSERT INTO categories (category_name, category_type, image_url) VALUES (?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sss", $category_name, $category_type, $image_url);
+        if($stmt->execute()) {
+            echo "<script>localStorage.setItem('message', 'Category added successfully!');</script>";
+        }
+    }
+    
+    if (isset($_POST['delete_category'])) {
+        $category_id = $_POST['category_id'];
+        
+        // Get image URL before deleting
+        $sql = "SELECT image_url FROM categories WHERE category_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $category_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            if (file_exists($row['image_url'])) {
+                unlink($row['image_url']);
+            }
+        }
+        
+        $sql = "DELETE FROM categories WHERE category_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $category_id);
+        if($stmt->execute()) {
+            echo "<script>localStorage.setItem('message', 'Category deleted successfully!');</script>";
+        }
+    }
+    
+    if (isset($_POST['update_category'])) {
+        $category_id = $_POST['category_id'];
+        $category_name = $_POST['category_name'];
+        $category_type = $_POST['category_type'];
+        
+        $image_url = "";
+        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+            $target_dir = "../uploads/categories/";
+            $target_file = $target_dir . time() . '_' . basename($_FILES['image']['name']);
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+                $image_url = $target_file;
+                
+                // Delete old image
+                $sql = "SELECT image_url FROM categories WHERE category_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $category_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($row = $result->fetch_assoc()) {
+                    if (file_exists($row['image_url'])) {
+                        unlink($row['image_url']);
+                    }
+                }
+            }
+        }
+        
+        if ($image_url) {
+            $sql = "UPDATE categories SET category_name = ?, category_type = ?, image_url = ? WHERE category_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("sssi", $category_name, $category_type, $image_url, $category_id);
+        } else {
+            $sql = "UPDATE categories SET category_name = ?, category_type = ? WHERE category_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssi", $category_name, $category_type, $category_id);
+        }
+        if($stmt->execute()) {
+            echo "<script>localStorage.setItem('message', 'Category updated successfully!');</script>";
+        }
+    }
+}
+
+// Fetch all categories
+$sql = "SELECT * FROM categories";
+$result = $conn->query($sql);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Management</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+    <!-- Custom CSS -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f5f6fa;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 80px 20px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 70px;
+            }
+
+            .sidebar.expanded ~ .main-content {
+                margin-left: 250px;
+            }
+        }
+
+        .category-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        /* Toastr Customization */
+        #toast-container > div {
+            opacity: 1;
+            box-shadow: 0 0 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <?php include 'includes/sidebar.php'; ?>
+    <?php include 'includes/topbar.php'; ?>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col">
+                    <h2>Category Management</h2>
+                </div>
+                <div class="col text-end">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                        <i class="fas fa-plus"></i> Add New Category
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="categoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Image</th>
+                                    <th>Category Name</th>
+                                    <th>Category Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while($row = $result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $row['category_id']; ?></td>
+                                    <td>
+                                        <?php if($row['image_url']): ?>
+                                            <img src="<?php echo $row['image_url']; ?>" class="category-image" alt="Category Image">
+                                        <?php else: ?>
+                                            <img src="../assets/images/no-image.png" class="category-image" alt="No Image">
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?php echo $row['category_name']; ?></td>
+                                    <td><?php echo $row['category_type']; ?></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button type="button" class="btn btn-sm btn-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editCategoryModal<?php echo $row['category_id']; ?>">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form method="POST" style="display: inline;" onsubmit="return confirmDelete()">
+                                                <input type="hidden" name="category_id" value="<?php echo $row['category_id']; ?>">
+                                                <button type="submit" name="delete_category" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Edit Modal for each category -->
+                                <div class="modal fade" id="editCategoryModal<?php echo $row['category_id']; ?>" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit Category</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form method="POST" enctype="multipart/form-data">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="category_id" value="<?php echo $row['category_id']; ?>">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Category Name</label>
+                                                        <input type="text" class="form-control" name="category_name" 
+                                                               value="<?php echo $row['category_name']; ?>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Category Type</label>
+                                                        <input type="text" class="form-control" name="category_type" 
+                                                               value="<?php echo $row['category_type']; ?>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Current Image</label><br>
+                                                        <?php if($row['image_url']): ?>
+                                                            <img src="<?php echo $row['image_url']; ?>" class="category-image mb-2" alt="Category Image">
+                                                        <?php endif; ?>
+                                                        <input type="file" class="form-control" name="image">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" name="update_category" class="btn btn-primary">Update Category</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Category Name</label>
+                            <input type="text" class="form-control" name="category_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category Type</label>
+                            <input type="text" class="form-control" name="category_type" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Image</label>
+                            <input type="file" class="form-control" name="image">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" name="add_category" class="btn btn-primary">Add Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        // Initialize Toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // Initialize DataTable
+        $(document).ready(function() {
+            $('#categoriesTable').DataTable({
+                "lengthMenu": [[10, 20, 30, -1], [10, 20, 30, "All"]],
+                "pageLength": 10,
+                "language": {
+                    "search": "Search categories:",
+                    "lengthMenu": "Show _MENU_ entries per page",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ categories",
+                    "infoEmpty": "Showing 0 to 0 of 0 categories",
+                    "infoFiltered": "(filtered from _MAX_ total categories)"
+                }
+            });
+        });
+
+        // Check for messages in localStorage
+        window.onload = function() {
+            const message = localStorage.getItem('message');
+            if (message) {
+                toastr.success(message);
+                localStorage.removeItem('message');
+            }
+        };
+
+        // Confirmation dialog for delete
+        function confirmDelete() {
+            return confirm('Are you sure you want to delete this category?');
+        }
+
+        // Close modals and reset forms
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('hidden.bs.modal', function () {
+                this.querySelector('form').reset();
+            });
+        });
+    </script>
+</body>
+</html>

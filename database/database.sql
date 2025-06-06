@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS categories (
     category_id INT PRIMARY KEY AUTO_INCREMENT,
     category_name VARCHAR(50) NOT NULL,
     category_type ENUM('food', 'product') NOT NULL,
-    image_url VARCHAR(255)
+    image_url VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create products table
@@ -41,14 +42,14 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
 
--- Insert categories
+-- Insert sample categories
 INSERT INTO categories (category_name, category_type, image_url) VALUES
-('Vegetables Corner', 'product', 'images/categories/vegetables.jpg'),
-('Fruits Corner', 'product', 'images/categories/fruits.jpg'),
-('Dairy Products', 'product', 'images/categories/dairy.jpg'),
-('Local Delicacies', 'food', 'images/categories/delicacies.jpg'),
-('Farm Fresh Meals', 'food', 'images/categories/meals.jpg'),
-('Organic Products', 'product', 'images/categories/organic.jpg');
+('Vegetables', 'product', 'uploads/categories/vegetables.jpg'),
+('Fruits', 'product', 'uploads/categories/fruits.jpg'),
+('Dairy Products', 'product', 'uploads/categories/dairy.jpg'),
+('Local Delicacies', 'food', 'uploads/categories/delicacies.jpg'),
+('Farm Fresh Meals', 'food', 'uploads/categories/meals.jpg'),
+('Organic Products', 'product', 'uploads/categories/organic.jpg');
 
 -- Insert products
 INSERT INTO products (product_name, description, price, category_id, image_url) VALUES
