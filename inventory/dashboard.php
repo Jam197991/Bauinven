@@ -1,5 +1,21 @@
 <?php
 session_start();
+include '../includes/database.php';
+
+// Get total products count
+$products_query = "SELECT COUNT(*) as total_products FROM products";
+$products_result = mysqli_query($conn, $products_query);
+$products_count = mysqli_fetch_assoc($products_result)['total_products'];
+
+// Get total staff count
+$staff_query = "SELECT COUNT(*) as total_staff FROM inventory_staff";
+$staff_result = mysqli_query($conn, $staff_query);
+$staff_count = mysqli_fetch_assoc($staff_result)['total_staff'];
+
+// Get total suppliers count
+$suppliers_query = "SELECT COUNT(*) as total_suppliers FROM suppliers";
+$suppliers_result = mysqli_query($conn, $suppliers_query);
+$suppliers_count = mysqli_fetch_assoc($suppliers_result)['total_suppliers'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -103,38 +119,28 @@ session_start();
                         <i class="fas fa-box"></i>
                     </div>
                 </div>
-                <div class="card-value">1,234</div>
+                <div class="card-value"><?php echo number_format($products_count); ?></div>
             </div>
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Total Sales</h3>
+                    <h3 class="card-title">Total Staff</h3>
                     <div class="card-icon bg-success">
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-users"></i>
                     </div>
                 </div>
-                <div class="card-value">$45,678</div>
+                <div class="card-value"><?php echo number_format($staff_count); ?></div>
             </div>
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Low Stock Items</h3>
+                    <h3 class="card-title">Total Suppliers</h3>
                     <div class="card-icon bg-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="fas fa-truck"></i>
                     </div>
                 </div>
-                <div class="card-value">23</div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Pending Orders</h3>
-                    <div class="card-icon bg-danger">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                </div>
-                <div class="card-value">15</div>
-            </div>
+                <div class="card-value"><?php echo number_format($suppliers_count); ?></div>
+            </div>            
         </div>
     </div>
 </body>

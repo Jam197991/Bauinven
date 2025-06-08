@@ -1,19 +1,40 @@
-<?php
-// Topbar component
+<?php 
+  
+  $query = "SELECT * FROM inventory_staff WHERE staff_id = ".$_SESSION['staff_id']."";
+  $rs = $conn->query($query);
+  $num = $rs->num_rows;
+  $rows = $rs->fetch_assoc();
+  $fullname = $rows['firstname']." ".$rows['lastname'];;
+
 ?>
+
 <div class="topbar">
-<div class="topbar-left">
-        <div class="search-box">
-            <input type="text" placeholder="Search...">
-            <i class="fas fa-search"></i>
+    <div class="topbar-left">
+        <div class="page-title">
+            <?php echo isset($page_title) ? htmlspecialchars($page_title) : 'Dashboard'; ?>
         </div>
     </div>
     
     <div class="topbar-right">
-        <div class="user-profile">
-            <img src="https://via.placeholder.com/40" alt="User Profile">
-            <span class="user-name">John Doe</span>
-            <i class="fas fa-chevron-down"></i>
+        <div class="user-profile" onclick="toggleDropdown()">
+            <img src="<?php echo htmlspecialchars($profile_image); ?>" alt="User Profile">
+            <div class="user-info">
+                <span class="user-name"><?php echo htmlspecialchars($fullname); ?></span>
+            </div>
+            <i class="fas fa-chevron-down dropdown-arrow"></i>
+        </div>
+        
+        <div class="dropdown-menu" id="dropdownMenu">
+            <div class="dropdown-header">
+                <img src="<?php echo htmlspecialchars($profile_image); ?>" alt="User Profile">
+                <div>
+                    <div class="dropdown-name"><?php echo htmlspecialchars($fullname); ?></div>
+                </div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <a href="../profile.php"><i class="fas fa-user"></i> Profile</a>
+            <a href="settings.php"><i class="fas fa-cog"></i> Settings</a>
+            <a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
     </div>
 </div>
@@ -44,52 +65,17 @@
     max-width: 400px;
 }
 
-.search-box {
-    position: relative;
-    width: 100%;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 8px 35px 8px 15px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    outline: none;
-}
-
-.search-box i {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #666;
+.page-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
 }
 
 .topbar-right {
     display: flex;
     align-items: center;
     gap: 20px;
-}
-
-.notifications {
     position: relative;
-    cursor: pointer;
-}
-
-.notifications i {
-    font-size: 1.2rem;
-    color: #666;
-}
-
-.badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #e74c3c;
-    color: white;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 0.7rem;
 }
 
 .user-profile {
@@ -97,6 +83,14 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.user-profile:hover {
+    background-color: #f5f5f5;
 }
 
 .user-profile img {
@@ -104,27 +98,184 @@
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .user-name {
     font-weight: 500;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.2;
+}
+
+.user-role {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.2;
+}
+
+.dropdown-arrow {
+    font-size: 12px;
+    color: #666;
+    transition: transform 0.3s ease;
+}
+
+.user-profile.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-width: 220px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    z-index: 1000;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.dropdown-menu.show {
+    display: block;
+    animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    background-color: #f9f9f9;
+}
+
+.dropdown-header img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dropdown-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: #333;
+}
+
+.dropdown-role {
+    font-size: 12px;
+    color: #666;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 5px 0;
+}
+
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f5f5f5;
+    color: #007bff;
+}
+
+.dropdown-menu a i {
+    width: 16px;
+    text-align: center;
+    font-size: 16px;
 }
 
 @media (max-width: 768px) {
     .topbar {
         left: 70px;
+        padding: 0 15px;
     }
     
     .sidebar.expanded ~ .topbar {
         left: 250px;
     }
     
-    .user-name {
+    .user-info {
         display: none;
     }
     
-    .search-box {
-        max-width: 200px;
+    .dropdown-menu {
+        right: -10px;
+        min-width: 200px;
+    }
+    
+    .page-title {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        left: 0;
+    }
+    
+    .sidebar.expanded ~ .topbar {
+        left: 250px;
     }
 }
 </style>
+
+<script>
+function toggleDropdown() {
+    const dropdown = document.getElementById('dropdownMenu');
+    const userProfile = document.querySelector('.user-profile');
+    
+    dropdown.classList.toggle('show');
+    userProfile.classList.toggle('active');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('dropdownMenu');
+    const userProfile = document.querySelector('.user-profile');
+    
+    if (!userProfile.contains(event.target)) {
+        dropdown.classList.remove('show');
+        userProfile.classList.remove('active');
+    }
+});
+
+// Prevent dropdown from closing when clicking inside it
+document.getElementById('dropdownMenu').addEventListener('click', function(event) {
+    event.stopPropagation();
+});
+</script>

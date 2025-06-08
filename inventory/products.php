@@ -102,13 +102,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             echo "<script>localStorage.setItem('error', 'Error updating product!');</script>";
         }
     }
+
+    if (isset($_POST['update_quantity'])) {
+        $product_id = $_POST['product_id'];
+        $quantity = $_POST['quantity'];
+        $operation = $_POST['operation']; // 'add', 'update', or 'delete'
+        
+        if ($operation == 'delete') {
+            $sql = "DELETE FROM inventory WHERE product_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $product_id);
+        } else {
+            // Check if inventory record exists
+            $check_sql = "SELECT quantity FROM inventory WHERE product_id = ?";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("i", $product_id);
+            $check_stmt->execute();
+            $result = $check_stmt->get_result();
+            
+            if ($result->num_rows > 0) {
+                // Update existing record
+                $sql = "UPDATE inventory SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ii", $quantity, $product_id);
+            } else {
+                // Insert new record
+                $sql = "INSERT INTO inventory (product_id, quantity, updated_at) VALUES (?, ?, NOW())";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ii", $product_id, $quantity);
+            }
+        }
+        
+        if($stmt->execute()) {
+            echo "<script>localStorage.setItem('message', 'Quantity " . ($operation == 'delete' ? 'deleted' : 'updated') . " successfully!');</script>";
+        } else {
+            echo "<script>localStorage.setItem('error', 'Error " . ($operation == 'delete' ? 'deleting' : 'updating') . " quantity!');</script>";
+        }
+    }
 }
 
 
 // Fetch all products with category names
-$sql = "SELECT p.*, c.category_name 
+$sql = "SELECT p.*, c.category_name, COALESCE(i.quantity, 0) as quantity 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.category_id 
+        LEFT JOIN inventory i ON p.product_id = i.product_id
         ORDER BY p.created_at DESC";    
 $result = $conn->query($sql);
 
@@ -192,6 +230,21 @@ $categories_result = $conn->query($categories_sql);
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        .quantity-low {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .quantity-high {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .quantity-normal {
+            color: #f39c12;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -223,6 +276,7 @@ $categories_result = $conn->query($categories_sql);
                                     <th>Category</th>
                                     <th>Description</th>
                                     <th>Price</th>
+                                    <th>Quantity</th>
                                     <th>Created At</th>
                                     <th>Actions</th>
                                 </tr>
@@ -244,6 +298,18 @@ $categories_result = $conn->query($categories_sql);
                                         <?php echo $row['description']; ?>
                                     </td>
                                     <td class="price">₱<?php echo number_format($row['price'], 2); ?></td>
+                                    <td>
+                                        <?php 
+                                        $quantity = $row['quantity'];
+                                        if ($quantity <= 30) {
+                                            echo '<span class="quantity-low">' . $quantity . ' (Low Stock)</span>';
+                                        } elseif ($quantity >= 100) {
+                                            echo '<span class="quantity-high">' . $quantity . ' (High Stock)</span>';
+                                        } else {
+                                            echo '<span class="quantity-normal">' . $quantity . ' (Normal)</span>';
+                                        }
+                                        ?>
+                                    </td>
                                     <td><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
                                     <td>
                                         <div class="action-buttons">
@@ -251,6 +317,11 @@ $categories_result = $conn->query($categories_sql);
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#editProductModal<?php echo $row['product_id']; ?>">
                                                 <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#quantityModal<?php echo $row['product_id']; ?>">
+                                                <i class="fas fa-boxes"></i>
                                             </button>
                                             <form method="POST" style="display: inline;" onsubmit="return confirmDelete()">
                                                 <input type="hidden" name="product_id" value="<?php echo $row['product_id']; ?>">
@@ -312,6 +383,46 @@ $categories_result = $conn->query($categories_sql);
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                                     <button type="submit" name="update_product" class="btn btn-primary">Update Product</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quantity Management Modal -->
+                                <div class="modal fade" id="quantityModal<?php echo $row['product_id']; ?>" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Manage Quantity - <?php echo $row['product_name']; ?></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form method="POST">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="product_id" value="<?php echo $row['product_id']; ?>">
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Current Quantity</label>
+                                                        <input type="text" class="form-control" value="<?php echo $row['quantity']; ?>" readonly>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Operation</label>
+                                                        <select class="form-select" name="operation" id="operation<?php echo $row['product_id']; ?>" required>
+                                                            <option value="add">Add Quantity</option>
+                                                            <option value="update">Update Quantity</option>
+                                                            <option value="delete">Delete Quantity</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3" id="quantityInput<?php echo $row['product_id']; ?>">
+                                                        <label class="form-label">New Quantity</label>
+                                                        <input type="number" class="form-control" name="quantity" min="0" value="<?php echo $row['quantity']; ?>">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" name="update_quantity" class="btn btn-primary">Save Changes</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -436,6 +547,20 @@ $categories_result = $conn->query($categories_sql);
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('hidden.bs.modal', function () {
                 this.querySelector('form').reset();
+            });
+        });
+
+        // Handle quantity operation changes
+        document.querySelectorAll('[id^="operation"]').forEach(select => {
+            select.addEventListener('change', function() {
+                const productId = this.id.replace('operation', '');
+                const quantityInput = document.getElementById('quantityInput' + productId);
+                
+                if (this.value === 'delete') {
+                    quantityInput.style.display = 'none';
+                } else {
+                    quantityInput.style.display = 'block';
+                }
             });
         });
     </script>

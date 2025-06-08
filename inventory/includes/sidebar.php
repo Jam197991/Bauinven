@@ -39,23 +39,9 @@
             </li>
 
             <li class="nav-item">
-                <a href="stock_management.php" class="nav-link">
-                    <i class="fas fa-boxes"></i>
-                    <span>Stock Management</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
                 <a href="reports.php" class="nav-link">
                     <i class="fas fa-chart-bar"></i>
                     <span>Reports</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="settings.php" class="nav-link">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
                 </a>
             </li>
             

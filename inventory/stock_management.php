@@ -54,7 +54,7 @@ $query = "SELECT p.product_id, p.product_name, p.description, p.price,
 $result = mysqli_query($conn, $query);
 
 // Fetch products for dropdown
-$products_query = "SELECT p.product_id, p.product_name, c.category_name 
+$products_query = "SELECT DISTINCT p.product_id, p.product_name, c.category_name 
                   FROM products p 
                   JOIN categories c ON p.category_id = c.category_id 
                   ORDER BY p.product_name";
