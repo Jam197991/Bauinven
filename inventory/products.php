@@ -10,27 +10,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $description = $_POST['description'];
         $price = $_POST['price'];
         
-        // Handle image upload
-        $target_dir = "../uploads/products/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
+        // Check for duplicate product name
+        $check_sql = "SELECT product_id FROM products WHERE product_name = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("s", $product_name);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
         
-        $image_url = "";
-        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            $target_file = $target_dir . time() . '_' . basename($_FILES['image']['name']);
-            if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
-                $image_url = '/uploads/products/' . basename($target_file);
-            }
-        }
-        
-        $sql = "INSERT INTO products (category_id, product_name, description, price, image_url) VALUES (?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("issds", $category_id, $product_name, $description, $price, $image_url);
-        if($stmt->execute()) {
-            echo "<script>localStorage.setItem('message', 'Product added successfully!');</script>";
+        if ($check_result->num_rows > 0) {
+            echo "<script>localStorage.setItem('error', 'Product name already exists! Please use a different name.');</script>";
         } else {
-            echo "<script>localStorage.setItem('error', 'Error adding product!');</script>";
+            // Handle image upload
+            $target_dir = "../uploads/products/";
+            if (!file_exists($target_dir)) {
+                mkdir($target_dir, 0777, true);
+            }
+            
+            $image_url = "";
+            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+                $target_file = $target_dir . time() . '_' . basename($_FILES['image']['name']);
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+                    $image_url = 'uploads/products/' . basename($target_file);
+                }
+            }
+            
+            $sql = "INSERT INTO products (category_id, product_name, description, price, image_url) VALUES (?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("issds", $category_id, $product_name, $description, $price, $image_url);
+            if($stmt->execute()) {
+                echo "<script>localStorage.setItem('message', 'Product added successfully!');</script>";
+            } else {
+                echo "<script>localStorage.setItem('error', 'Error adding product!');</script>";
+            }
         }
     }
     
@@ -66,40 +77,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $description = $_POST['description'];
         $price = $_POST['price'];
         
-        $image_url = "";
-        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            $target_dir = "../uploads/products/";
-            $target_file = $target_dir . time() . '_' . basename($_FILES['image']['name']);
-            if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
-                $image_url = '/uploads/products/' . basename($target_file);
-                
-                // Delete old image
-                $sql = "SELECT image_url FROM products WHERE product_id = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("i", $product_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                if ($row = $result->fetch_assoc()) {
-                    if (file_exists($row['image_url'])) {
-                        unlink($row['image_url']);
+        // Check for duplicate product name, excluding current product
+        $check_sql = "SELECT product_id FROM products WHERE product_name = ? AND product_id != ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("si", $product_name, $product_id);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        
+        if ($check_result->num_rows > 0) {
+            echo "<script>localStorage.setItem('error', 'Product name already exists! Please use a different name.');</script>";
+        } else {
+            $image_url = "";
+            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+                $target_dir = "../uploads/products/";
+                $target_file = $target_dir . time() . '_' . basename($_FILES['image']['name']);
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+                    $image_url = 'uploads/products/' . basename($target_file);
+                    
+                    // Delete old image
+                    $sql = "SELECT image_url FROM products WHERE product_id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("i", $product_id);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    if ($row = $result->fetch_assoc()) {
+                        if ($row['image_url'] && file_exists('../' . $row['image_url'])) {
+                            unlink('../' . $row['image_url']);
+                        }
                     }
                 }
             }
-        }
-        
-        if ($image_url) {
-            $sql = "UPDATE products SET category_id = ?, product_name = ?, description = ?, price = ?, image_url = ? WHERE product_id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("issdsi", $category_id, $product_name, $description, $price, $image_url, $product_id);
-        } else {
-            $sql = "UPDATE products SET category_id = ?, product_name = ?, description = ?, price = ? WHERE product_id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("issdi", $category_id, $product_name, $description, $price, $product_id);
-        }
-        if($stmt->execute()) {
-            echo "<script>localStorage.setItem('message', 'Product updated successfully!');</script>";
-        } else {
-            echo "<script>localStorage.setItem('error', 'Error updating product!');</script>";
+            
+            if ($image_url) {
+                $sql = "UPDATE products SET category_id = ?, product_name = ?, description = ?, price = ?, image_url = ? WHERE product_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("issdsi", $category_id, $product_name, $description, $price, $image_url, $product_id);
+            } else {
+                $sql = "UPDATE products SET category_id = ?, product_name = ?, description = ?, price = ? WHERE product_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("issdi", $category_id, $product_name, $description, $price, $product_id);
+            }
+            if($stmt->execute()) {
+                echo "<script>localStorage.setItem('message', 'Product updated successfully!');</script>";
+            } else {
+                echo "<script>localStorage.setItem('error', 'Error updating product!');</script>";
+            }
         }
     }
 
@@ -143,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
 // Fetch all products with category names
-$sql = "SELECT p.*, c.category_name, COALESCE(i.quantity, 0) as quantity 
+$sql = "SELECT p.*, c.category_type, COALESCE(i.quantity, 0) as quantity 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.category_id 
         LEFT JOIN inventory i ON p.product_id = i.product_id
@@ -151,7 +173,7 @@ $sql = "SELECT p.*, c.category_name, COALESCE(i.quantity, 0) as quantity
 $result = $conn->query($sql);
 
 // Fetch categories for dropdown
-$categories_sql = "SELECT category_id, category_name FROM categories";
+$categories_sql = "SELECT category_id, category_type FROM categories";
 $categories_result = $conn->query($categories_sql);
 ?>
 <!DOCTYPE html>
@@ -287,13 +309,13 @@ $categories_result = $conn->query($categories_sql);
                                     <td><?php echo $row['product_id']; ?></td>
                                     <td>
                                         <?php if($row['image_url']): ?>
-                                            <img src="<?php echo $row['image_url']; ?>" class="product-image" alt="Product Image">
+                                            <img src="../<?php echo $row['image_url']; ?>" class="product-image" alt="Product Image">
                                         <?php else: ?>
                                             <img src="../assets/images/no-image.png" class="product-image" alt="No Image">
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo $row['product_name']; ?></td>
-                                    <td><?php echo $row['category_name']; ?></td>
+                                    <td><?php echo $row['category_type']; ?></td>
                                     <td class="description" title="<?php echo $row['description']; ?>">
                                         <?php echo $row['description']; ?>
                                     </td>
@@ -353,12 +375,12 @@ $categories_result = $conn->query($categories_sql);
                                                             ?>
                                                             <option value="<?php echo $category['category_id']; ?>" 
                                                                     <?php echo ($category['category_id'] == $row['category_id']) ? 'selected' : ''; ?>>
-                                                                <?php echo $category['category_name']; ?>
+                                                                <?php echo $category['category_type']; ?>
                                                             </option>
                                                             <?php endwhile; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="mb-3">
+                                                    <div class="mb-3">  
                                                         <label class="form-label">Product Name</label>
                                                         <input type="text" class="form-control" name="product_name" 
                                                                value="<?php echo $row['product_name']; ?>" required>
@@ -375,7 +397,7 @@ $categories_result = $conn->query($categories_sql);
                                                     <div class="mb-3">
                                                         <label class="form-label">Current Image</label><br>
                                                         <?php if($row['image_url']): ?>
-                                                            <img src="<?php echo $row['image_url']; ?>" class="product-image mb-2" alt="Product Image">
+                                                            <img src="../<?php echo $row['image_url']; ?>" class="product-image mb-2" alt="Product Image">
                                                         <?php endif; ?>
                                                         <input type="file" class="form-control" name="image">
                                                     </div>
@@ -456,7 +478,7 @@ $categories_result = $conn->query($categories_sql);
                                 while($category = $categories_result->fetch_assoc()): 
                                 ?>
                                 <option value="<?php echo $category['category_id']; ?>">
-                                    <?php echo $category['category_name']; ?>
+                                    <?php echo $category['category_type']; ?>
                                 </option>
                                 <?php endwhile; ?>
                             </select>

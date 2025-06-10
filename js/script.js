@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeResponsiveFeatures();
     initializeMobileFeatures();
 
+    // Initialize quantity displays for all products
+    Object.keys(quantities).forEach(productId => {
+        updateQuantityDisplay(productId);
+    });
+
     // Add touch event listeners for cart swipe
     let touchStartY = 0;
     let touchEndY = 0;
@@ -77,12 +82,37 @@ function saveCart() {
 }
 
 function increaseQuantity(productId) {
-    quantities[productId] = (quantities[productId] || 0) + 1;
+    // Check if product is out of stock
+    const productCard = document.querySelector(`[onclick*="increaseQuantity(${productId})"]`).closest('.product-card');
+    if (productCard && productCard.classList.contains('out-of-stock')) {
+        showNotification('This product is out of stock!', 'error');
+        return;
+    }
+    
+    // Get current quantity and available stock
+    const currentQuantity = quantities[productId] || 0;
+    const stockQuantityElement = productCard.querySelector('.stock-quantity');
+    const availableStock = parseInt(stockQuantityElement.textContent.split(' ')[0]); // Extract number from "X Stocks"
+    
+    // Check if increasing quantity would exceed available stock
+    if (currentQuantity >= availableStock) {
+        showNotification(`Cannot add more than ${availableStock} items. Available stock exceeded!`, 'error');
+        return;
+    }
+    
+    quantities[productId] = currentQuantity + 1;
     updateQuantityDisplay(productId);
     saveCart();
 }
 
 function decreaseQuantity(productId) {
+    // Check if product is out of stock
+    const productCard = document.querySelector(`[onclick*="decreaseQuantity(${productId})"]`).closest('.product-card');
+    if (productCard && productCard.classList.contains('out-of-stock')) {
+        showNotification('This product is out of stock!', 'error');
+        return;
+    }
+    
     if (quantities[productId] > 0) {
         quantities[productId]--;
         updateQuantityDisplay(productId);
@@ -91,15 +121,61 @@ function decreaseQuantity(productId) {
 }
 
 function updateQuantityDisplay(productId) {
-    document.getElementById('quantity-' + productId).textContent = quantities[productId] || 0;
+    const quantityElement = document.getElementById('quantity-' + productId);
+    const currentQuantity = quantities[productId] || 0;
+    quantityElement.textContent = currentQuantity;
+    
+    // Get the product card and check stock limits
+    const productCard = quantityElement.closest('.product-card');
+    if (productCard) {
+        const stockQuantityElement = productCard.querySelector('.stock-quantity');
+        const availableStock = parseInt(stockQuantityElement.textContent.split(' ')[0]); // Extract number from "X Stocks"
+        const quantityControls = productCard.querySelector('.quantity-controls');
+        const plusButton = productCard.querySelector('[onclick*="increaseQuantity"]');
+        
+        // Add or remove 'at-limit' class based on current quantity vs available stock
+        if (currentQuantity >= availableStock) {
+            quantityControls.classList.add('at-limit');
+            if (plusButton) {
+                plusButton.disabled = true;
+            }
+        } else {
+            quantityControls.classList.remove('at-limit');
+            if (plusButton) {
+                plusButton.disabled = false;
+            }
+        }
+    }
 }
 
 function addToCart(id, name, price) {
     const quantity = quantities[id] || 1;
     if (quantity <= 0) return;
 
+    // Check if product is out of stock
+    const productCard = document.querySelector(`[onclick*="addToCart(${id},"]`).closest('.product-card');
+    if (productCard && productCard.classList.contains('out-of-stock')) {
+        showNotification('This product is out of stock!', 'error');
+        return;
+    }
+
+    // Check if quantity exceeds available stock
+    const stockQuantityElement = productCard.querySelector('.stock-quantity');
+    const availableStock = parseInt(stockQuantityElement.textContent.split(' ')[0]); // Extract number from "X Stocks"
+    
+    if (quantity > availableStock) {
+        showNotification(`Cannot add ${quantity} items. Only ${availableStock} items available in stock!`, 'error');
+        return;
+    }
+
     const existingItem = cart.find(item => item.id === id);
     if (existingItem) {
+        // Check if adding this quantity would exceed available stock
+        const totalQuantityAfterAdd = existingItem.quantity + quantity;
+        if (totalQuantityAfterAdd > availableStock) {
+            showNotification(`Cannot add ${quantity} more items. Total would exceed available stock of ${availableStock}!`, 'error');
+            return;
+        }
         existingItem.quantity += quantity;
     } else {
         cart.push({ id, name, price, quantity });

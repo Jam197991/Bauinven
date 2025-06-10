@@ -1,17 +1,40 @@
 <?php 
-  
-  $query = "SELECT * FROM inventory_staff WHERE staff_id = ".$_SESSION['staff_id']."";
-  $rs = $conn->query($query);
-  $num = $rs->num_rows;
-  $rows = $rs->fetch_assoc();
-  $fullname = $rows['firstname']." ".$rows['lastname'];;
+// Check if user is logged in and get user info
+$fullname = "Guest User";
+$profile_image = "images/default-avatar.png";
 
+// Check if staff_id exists in session
+if (isset($_SESSION['staff_id']) && !empty($_SESSION['staff_id'])) {
+    $query = "SELECT * FROM inventory_staff WHERE staff_id = " . intval($_SESSION['staff_id']);
+    $rs = $conn->query($query);
+    if ($rs && $rs->num_rows > 0) {
+        $rows = $rs->fetch_assoc();
+        $fullname = isset($rows['firstname']) && isset($rows['lastname']) 
+                   ? $rows['firstname'] . " " . $rows['lastname'] 
+                   : "Staff User";
+        $profile_image = isset($rows['profile_image']) ? $rows['profile_image'] : "images/default-avatar.png";
+    }
+} elseif (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    // Fallback to regular users table
+    $query = "SELECT * FROM users WHERE user_id = " . intval($_SESSION['user_id']);
+    $rs = $conn->query($query);
+    if ($rs && $rs->num_rows > 0) {
+        $rows = $rs->fetch_assoc();
+        $fullname = isset($rows['username']) ? $rows['username'] : "User";
+        $profile_image = isset($rows['profile_image']) ? $rows['profile_image'] : "images/default-avatar.png";
+    }
+}
+
+// Ensure profile_image is set
+if (!isset($profile_image) || empty($profile_image)) {
+    $profile_image = "images/default-avatar.png";
+}
 ?>
 
 <div class="topbar">
     <div class="topbar-left">
         <div class="page-title">
-            <?php echo isset($page_title) ? htmlspecialchars($page_title) : 'Dashboard'; ?>
+            <?php echo isset($page_title) ? htmlspecialchars($page_title) : ''; ?>
         </div>
     </div>
     

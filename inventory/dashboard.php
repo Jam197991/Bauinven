@@ -16,6 +16,16 @@ $staff_count = mysqli_fetch_assoc($staff_result)['total_staff'];
 $suppliers_query = "SELECT COUNT(*) as total_suppliers FROM suppliers";
 $suppliers_result = mysqli_query($conn, $suppliers_query);
 $suppliers_count = mysqli_fetch_assoc($suppliers_result)['total_suppliers'];
+
+// Get low stock products (less than 50 items)
+$low_stock_query = "SELECT p.*, c.category_name, i.quantity, i.updated_at 
+                   FROM products p 
+                   LEFT JOIN categories c ON p.category_id = c.category_id 
+                   LEFT JOIN inventory i ON p.product_id = i.product_id 
+                   WHERE i.quantity < 50 
+                   ORDER BY i.quantity ASC 
+                   LIMIT 5";
+$low_stock_result = mysqli_query($conn, $low_stock_query);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -104,6 +114,47 @@ $suppliers_count = mysqli_fetch_assoc($suppliers_result)['total_suppliers'];
         .bg-success { background: #2ecc71; color: white; }
         .bg-warning { background: #f1c40f; color: white; }
         .bg-danger { background: #e74c3c; color: white; }
+
+        /* Table Styles */
+        .low-stock-table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .low-stock-table h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .stock-warning {
+            color: #e74c3c;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -141,6 +192,32 @@ $suppliers_count = mysqli_fetch_assoc($suppliers_result)['total_suppliers'];
                 </div>
                 <div class="card-value"><?php echo number_format($suppliers_count); ?></div>
             </div>            
+        </div>
+
+        <div class="low-stock-table">
+            <h2>Low Stock Products</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Current Stock</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($product = mysqli_fetch_assoc($low_stock_result)): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($product['product_name']); ?></td>
+                        <td><?php echo htmlspecialchars($product['category_name'] ?? 'Uncategorized'); ?></td>
+                        <td>₱<?php echo number_format($product['price'], 2); ?></td>
+                        <td class="stock-warning"><?php echo $product['quantity']; ?> units</td>
+                        <td><?php echo date('M d, Y', strtotime($product['updated_at'])); ?></td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </body>

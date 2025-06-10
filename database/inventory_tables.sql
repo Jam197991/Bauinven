@@ -28,6 +28,15 @@ CREATE TABLE IF NOT EXISTS `suppliers` (
   PRIMARY KEY (`supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Simple inventory table for product stock levels
+CREATE TABLE IF NOT EXISTS `inventory` (
+  `product_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 0,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`product_id`),
+  CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Table for inventory items
 CREATE TABLE IF NOT EXISTS `inventory_items` (
   `item_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -49,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `inventory_items` (
 -- Table for stock movements
 CREATE TABLE IF NOT EXISTS `stock_movements` (
   `movement_id` int(11) NOT NULL AUTO_INCREMENT,
-  `item_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
   `movement_type` enum('in','out') NOT NULL,
   `quantity` int(11) NOT NULL,
   `unit_price` decimal(10,2) NOT NULL,
@@ -58,8 +67,8 @@ CREATE TABLE IF NOT EXISTS `stock_movements` (
   `movement_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `notes` text DEFAULT NULL,
   PRIMARY KEY (`movement_id`),
-  KEY `item_id` (`item_id`),
+  KEY `product_id` (`product_id`),
   KEY `supplier_id` (`supplier_id`),
-  CONSTRAINT `stock_movements_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `inventory_items` (`item_id`),
+  CONSTRAINT `stock_movements_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`),
   CONSTRAINT `stock_movements_ibfk_2` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; 

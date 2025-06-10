@@ -2,11 +2,62 @@
 session_start();
 include '../includes/database.php';
 
+// Display error message if exists
+if (isset($_SESSION['error'])) {
+    echo "<script>localStorage.setItem('message', '" . addslashes($_SESSION['error']) . "');</script>";
+    unset($_SESSION['error']);
+}
+
+// Display success message if exists
+if (isset($_SESSION['success'])) {
+    echo "<script>localStorage.setItem('message', '" . addslashes($_SESSION['success']) . "');</script>";
+    unset($_SESSION['success']);
+}
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['add_category'])) {
         $category_name = $_POST['category_name'];
         $category_type = $_POST['category_type'];
+        
+        // Add validation and debugging
+        if (empty($category_type)) {
+            $_SESSION['error'] = 'Error: Category Type cannot be empty!';
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit;
+        }
+
+        // First check if category name already exists
+        $check_name_sql = "SELECT category_name, category_type FROM categories WHERE category_name = ?";
+        $check_name_stmt = $conn->prepare($check_name_sql);
+        $check_name_stmt->bind_param("s", $category_name);
+        $check_name_stmt->execute();
+        $name_result = $check_name_stmt->get_result();
+        
+        if ($name_result->num_rows > 0) {
+            $existing_categories = [];
+            while($row = $name_result->fetch_assoc()) {
+                $existing_categories[] = $row['category_type'];
+            }
+            $message = "Error: Category name '$category_name' already exists with type(s): " . implode(", ", $existing_categories);
+            $_SESSION['error'] = $message;
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit;
+        }
+
+        // Then check for exact duplicate (name + type)
+        $check_sql = "SELECT COUNT(*) as count FROM categories WHERE category_name = ? AND category_type = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("ss", $category_name, $category_type);
+        $check_stmt->execute();
+        $result = $check_stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        if ($row['count'] > 0) {
+            $_SESSION['error'] = "Error: A category with name \"$category_name\" and type \"$category_type\" already exists!";
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit;
+        }
         
         // Handle image upload
         $target_dir = "../uploads/categories/";
@@ -26,7 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("sss", $category_name, $category_type, $image_url);
         if($stmt->execute()) {
-            echo "<script>localStorage.setItem('message', 'Category added successfully!');</script>";
+            $_SESSION['success'] = 'Category added successfully!';
+        } else {
+            $_SESSION['error'] = 'Error adding category: ' . $stmt->error;
         }
     }
     
@@ -49,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $category_id);
         if($stmt->execute()) {
-            echo "<script>localStorage.setItem('message', 'Category deleted successfully!');</script>";
+            $_SESSION['success'] = 'Category deleted successfully!';
         }
     }
     
@@ -57,6 +110,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $category_id = $_POST['category_id'];
         $category_name = $_POST['category_name'];
         $category_type = $_POST['category_type'];
+        
+        // First check if category name already exists (excluding current category)
+        $check_name_sql = "SELECT category_name, category_type FROM categories WHERE category_name = ? AND category_id != ?";
+        $check_name_stmt = $conn->prepare($check_name_sql);
+        $check_name_stmt->bind_param("si", $category_name, $category_id);
+        $check_name_stmt->execute();
+        $name_result = $check_name_stmt->get_result();
+        
+        if ($name_result->num_rows > 0) {
+            $existing_categories = [];
+            while($row = $name_result->fetch_assoc()) {
+                $existing_categories[] = $row['category_type'];
+            }
+            $message = "Error: Category name '$category_name' already exists with type(s): " . implode(", ", $existing_categories);
+            $_SESSION['error'] = $message;
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit;
+        }
+
+        // Then check for exact duplicate (name + type)
+        $check_sql = "SELECT COUNT(*) as count FROM categories WHERE category_name = ? AND category_type = ? AND category_id != ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("ssi", $category_name, $category_type, $category_id);
+        $check_stmt->execute();
+        $result = $check_stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        if ($row['count'] > 0) {
+            $_SESSION['error'] = "Error: A category with name \"$category_name\" and type \"$category_type\" already exists!";
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit;
+        }
         
         $image_url = "";
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
@@ -89,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bind_param("ssi", $category_name, $category_type, $category_id);
         }
         if($stmt->execute()) {
-            echo "<script>localStorage.setItem('message', 'Category updated successfully!');</script>";
+            $_SESSION['success'] = 'Category updated successfully!';
         }
     }
 }
@@ -242,8 +327,11 @@ $result = $conn->query($sql);
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label">Category Type</label>
-                                                        <input type="text" class="form-control" name="category_type" 
-                                                               value="<?php echo $row['category_type']; ?>" required>
+                                                        <select class="form-select" name="category_type" required>
+                                                            <option value="">Select Category Type</option>
+                                                            <option value="Food" <?php echo ($row['category_type'] == 'Food') ? 'selected' : ''; ?>>Food</option>
+                                                            <option value="Product" <?php echo ($row['category_type'] == 'Product') ? 'selected' : ''; ?>>Product</option>
+                                                        </select>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label">Current Image</label><br>
@@ -286,7 +374,11 @@ $result = $conn->query($sql);
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Category Type</label>
-                            <input type="text" class="form-control" name="category_type" required>
+                            <select class="form-select" name="category_type" required>
+                                <option value="">Select Category Type</option>
+                                <option value="Food">Food</option>
+                                <option value="Product">Product</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Image</label>
