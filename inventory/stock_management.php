@@ -76,6 +76,7 @@ $products_result = mysqli_query($conn, $products_query);
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <!-- Custom CSS -->
+    <link href="../img/bau.jpg" rel="icon">
     <style>
         * {
             margin: 0;

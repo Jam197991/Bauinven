@@ -1,4 +1,8 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 
 include 'includes/database.php';
@@ -8,7 +12,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'chef') {
     exit();
 }
 
-
+// Debug session information
+error_log("Chef.php - Session data: " . print_r($_SESSION, true));
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -22,7 +27,16 @@ $orders_sql = "SELECT o.*,
                LEFT JOIN products p ON oi.product_id = p.product_id
                GROUP BY o.order_id
                ORDER BY o.order_date DESC";
+
+error_log("Orders SQL Query: " . $orders_sql);
 $orders_result = $conn->query($orders_sql);
+
+if (!$orders_result) {
+    error_log("Orders query error: " . $conn->error);
+    die("Error fetching orders: " . $conn->error);
+}
+
+error_log("Number of orders found: " . $orders_result->num_rows);
 ?>
 
 <!DOCTYPE html>
@@ -34,6 +48,7 @@ $orders_result = $conn->query($orders_sql);
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="img/bau.jpg" rel="icon">
     <style>
         :root {
             --primary-color: #2e7d32;
@@ -434,10 +449,18 @@ $orders_result = $conn->query($orders_sql);
                 <h1><i class="fas fa-utensils"></i> Chef Dashboard</h1>
                 <div class="welcome-text">Welcome back, <?php echo htmlspecialchars($_SESSION['username']); ?>!</div>
             </div>
-            <a href="logout.php" class="logout-btn">
-                <i class="fas fa-power-off"></i>
-                <span>Logout</span>
-            </a>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <button onclick="testFunction()" style="background: #ffc107; color: #333; padding: 0.8rem 1.5rem; border: none; border-radius: 25px; cursor: pointer; font-weight: 500;">
+                    <i class="fas fa-bug"></i> Test JS
+                </button>
+                <button onclick="testAjax()" style="background: #17a2b8; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 25px; cursor: pointer; font-weight: 500;">
+                    <i class="fas fa-network-wired"></i> Test AJAX
+                </button>
+                <a href="logout.php" class="logout-btn">
+                    <i class="fas fa-power-off"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
         </div>
 
         <div class="orders-grid">
@@ -475,9 +498,42 @@ $orders_result = $conn->query($orders_sql);
     <div class="notification" id="notification"></div>
 
     <script>
+        // Test function to verify JavaScript is working
+        function testFunction() {
+            console.log('Test function called - JavaScript is working');
+            alert('JavaScript is working!');
+        }
+
+        // Test AJAX functionality
+        function testAjax() {
+            console.log('Testing AJAX functionality...');
+            
+            fetch('test_ajax.php', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                console.log('Test AJAX Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Test AJAX Response data:', data);
+                alert('AJAX Test Result: ' + data.message + '\nSession: ' + JSON.stringify(data.session_data));
+            })
+            .catch(error => {
+                console.error('Test AJAX Error:', error);
+                alert('AJAX Test Failed: ' + error.message);
+            });
+        }
+
         function updateOrderStatus(orderId, status) {
+            console.log('updateOrderStatus function called');
             const select = event.target;
             const originalValue = select.value;
+            
+            console.log('Updating order status:', { orderId, status });
             
             // Show loading state
             select.disabled = true;
@@ -493,8 +549,13 @@ $orders_result = $conn->query($orders_sql);
                     status: status
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
+                
                 const notification = document.getElementById('notification');
                 notification.innerHTML = `<i class="fas ${data.success ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${data.message}`;
                 notification.className = 'notification ' + (data.success ? 'success' : 'error');
@@ -552,6 +613,9 @@ $orders_result = $conn->query($orders_sql);
                 window.location.href = 'logout.php';
             }, 2000);
         });
+
+        // Test if JavaScript is loaded
+        console.log('Chef dashboard JavaScript loaded');
     </script>
 </body>
 </html> 

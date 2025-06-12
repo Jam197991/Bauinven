@@ -216,6 +216,7 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom CSS -->
+    <link href="../img/bau.jpg" rel="icon">
     <style>
         * {
             margin: 0;
@@ -666,7 +667,7 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                                 <tr>
                                     <td><?php echo $row['order_id']; ?></td>
                                     <td><?php echo date('M d, Y', strtotime($row['order_date'])); ?></td>
-                                    <td>$<?php echo number_format($row['total_amount'], 2); ?></td>
+                                    <td>₱<?php echo number_format($row['total_amount'], 2); ?></td>
                                     <td><?php echo $row['total_items']; ?></td>
                                     <td>
                                         <span class="status-badge status-<?php echo strtolower($row['status']); ?>">
@@ -706,7 +707,7 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                                 <tr>
                                     <td><?php echo $row['order_id']; ?></td>
                                     <td><?php echo date('M d, Y', strtotime($row['order_date'])); ?></td>
-                                    <td>$<?php echo number_format($row['total_amount'], 2); ?></td>
+                                    <td>₱<?php echo number_format($row['total_amount'], 2); ?></td>
                                     <td><?php echo $row['total_items']; ?></td>
                                     <td>
                                         <span class="status-badge status-<?php echo strtolower($row['status']); ?>">
@@ -745,8 +746,8 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                                 <tr>
                                     <td><?php echo htmlspecialchars($row['product_name']); ?></td>
                                     <td><?php echo $row['total_sold']; ?></td>
-                                    <td>$<?php echo number_format($row['total_revenue'], 2); ?></td>
-                                    <td>$<?php echo number_format($row['avg_price'], 2); ?></td>
+                                    <td>₱<?php echo number_format($row['total_revenue'], 2); ?></td>
+                                    <td>₱<?php echo number_format($row['avg_price'], 2); ?></td>
                                 </tr>
                                 <?php } ?>
                             </tbody>
@@ -780,8 +781,8 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                             <tr>
                                 <td><?php echo date('M d, Y', strtotime($row['sale_date'])); ?></td>
                                 <td><?php echo $row['total_orders']; ?></td>
-                                <td>$<?php echo number_format($row['total_sales'], 2); ?></td>
-                                <td>$<?php echo number_format($row['avg_order_value'], 2); ?></td>
+                                <td>₱<?php echo number_format($row['total_sales'], 2); ?></td>
+                                <td>₱<?php echo number_format($row['avg_order_value'], 2); ?></td>
                             </tr>
                             <?php } ?>
                         </tbody>
@@ -821,8 +822,8 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                                 <td><?php echo htmlspecialchars($row['product_name']); ?></td>
                                 <td><?php echo ucfirst($row['movement_type']); ?></td>
                                 <td><?php echo $row['quantity']; ?></td>
-                                <td>$<?php echo number_format($row['unit_price'], 2); ?></td>
-                                <td>$<?php echo number_format($row['total_amount'], 2); ?></td>
+                                <td>₱<?php echo number_format($row['unit_price'], 2); ?></td>
+                                <td>₱<?php echo number_format($row['total_amount'], 2); ?></td>
                                 <td><?php echo htmlspecialchars($row['supplier_name'] ?? 'N/A'); ?></td>
                                 <td><?php echo date('M d, Y', strtotime($row['movement_date'])); ?></td>
                                 <td><?php echo htmlspecialchars($row['notes'] ?? ''); ?></td>
@@ -878,13 +879,13 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                 data: {
                     labels: <?php echo json_encode($sales_dates); ?>,
                     datasets: [{
-                        label: 'Sales Amount ($)',
+                        label: 'Sales Amount (₱)',
                         data: <?php echo json_encode($sales_amounts); ?>,
                         borderColor: '#3498db',
                         backgroundColor: 'rgba(52, 152, 219, 0.1)',
                         borderWidth: 1,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4    
                     }, {
                         label: 'Number of Orders',
                         data: <?php echo json_encode($sales_orders); ?>,
@@ -985,7 +986,7 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                 data: {
                     labels: <?php echo json_encode($product_names); ?>,
                     datasets: [{
-                        label: 'Revenue ($)',
+                        label: 'Revenue (₱)',
                         data: <?php echo json_encode($product_revenues); ?>,
                         backgroundColor: 'rgba(52, 152, 219, 0.8)',
                         borderColor: '#3498db',
@@ -1031,7 +1032,7 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                 data: {
                     labels: <?php echo json_encode($monthly_labels); ?>,
                     datasets: [{
-                        label: 'Sales Amount ($)',
+                        label: 'Sales Amount (₱)',
                         data: <?php echo json_encode($monthly_sales); ?>,
                         backgroundColor: 'rgba(46, 204, 113, 0.8)',
                         borderColor: '#2ecc71',

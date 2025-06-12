@@ -191,6 +191,7 @@ $categories_result = $conn->query($categories_sql);
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <!-- Custom CSS -->
+    <link href="../img/bau.jpg" rel="icon">
     <style>
         * {
             margin: 0;
@@ -431,9 +432,9 @@ $categories_result = $conn->query($categories_sql);
                                                     <div class="mb-3">
                                                         <label class="form-label">Operation</label>
                                                         <select class="form-select" name="operation" id="operation<?php echo $row['product_id']; ?>" required>
-                                                            <option value="add">Add Quantity</option>
+                                                            
                                                             <option value="update">Update Quantity</option>
-                                                            <option value="delete">Delete Quantity</option>
+                                                            
                                                         </select>
                                                     </div>
                                                     

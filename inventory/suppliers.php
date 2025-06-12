@@ -66,15 +66,63 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $notes = $_POST['notes'];
         $total_amount = $quantity * $unit_price;
         
-        $sql = "INSERT INTO stock_movements (product_id, movement_type, quantity, unit_price, total_amount, supplier_id, notes) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isiddis", $product_id, $movement_type, $quantity, $unit_price, $total_amount, $supplier_id, $notes);
+        // Start transaction
+        $conn->begin_transaction();
         
-        if($stmt->execute()) {
+        try {
+            // Insert stock movement
+            $sql = "INSERT INTO stock_movements (product_id, movement_type, quantity, unit_price, total_amount, supplier_id, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("isiddis", $product_id, $movement_type, $quantity, $unit_price, $total_amount, $supplier_id, $notes);
+            $stmt->execute();
+            
+            // Check if product exists in inventory
+            $check_sql = "SELECT quantity FROM inventory WHERE product_id = ?";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("i", $product_id);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            
+            if ($check_result->num_rows > 0) {
+                // Product exists in inventory, update quantity
+                $current_quantity = $check_result->fetch_assoc()['quantity'];
+                
+                if ($movement_type == 'Stock-in') {
+                    $new_quantity = $current_quantity + $quantity;
+                } else { // Stock-out
+                    $new_quantity = $current_quantity - $quantity;
+                    // Prevent negative inventory
+                    if ($new_quantity < 0) {
+                        throw new Exception("Insufficient stock! Current stock: $current_quantity, trying to remove: $quantity");
+                    }
+                }
+                
+                $update_sql = "UPDATE inventory SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
+                $update_stmt = $conn->prepare($update_sql);
+                $update_stmt->bind_param("ii", $new_quantity, $product_id);
+                $update_stmt->execute();
+            } else {
+                // Product doesn't exist in inventory, insert new record
+                if ($movement_type == 'Stock-in') {
+                    $insert_sql = "INSERT INTO inventory (product_id, quantity, updated_at) VALUES (?, ?, NOW())";
+                    $insert_stmt = $conn->prepare($insert_sql);
+                    $insert_stmt->bind_param("ii", $product_id, $quantity);
+                    $insert_stmt->execute();
+                } else {
+                    // Stock-out for non-existent product is not allowed
+                    throw new Exception("Cannot perform Stock-out for product that doesn't exist in inventory!");
+                }
+            }
+            
+            // Commit transaction
+            $conn->commit();
             echo "<script>localStorage.setItem('message', 'Stock movement added successfully!');</script>";
-        } else {
-            echo "<script>localStorage.setItem('error', 'Error adding stock movement!');</script>";
+            
+        } catch (Exception $e) {
+            // Rollback transaction on error
+            $conn->rollback();
+            echo "<script>localStorage.setItem('error', 'Error adding stock movement: " . addslashes($e->getMessage()) . "');</script>";
         }
     }
 }
@@ -92,6 +140,14 @@ $products_result = $conn->query($products_sql);
 // Fetch all categories
 $categories_sql = "SELECT * FROM categories";
 $categories_result = $conn->query($categories_sql);
+
+// Fetch all stock movements with product and supplier details
+$stock_movements_sql = "SELECT sm.*, p.product_name, s.supplier_name 
+                       FROM stock_movements sm 
+                       LEFT JOIN products p ON sm.product_id = p.product_id 
+                       LEFT JOIN suppliers s ON sm.supplier_id = s.supplier_id 
+                       ORDER BY sm.movement_date DESC";
+$stock_movements_result = $conn->query($stock_movements_sql);
 
 // Store products in an array for JavaScript
 $products_array = array();
@@ -115,6 +171,7 @@ $products_json = json_encode($products_array);
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <!-- Custom CSS -->
+    <link href="../img/bau.jpg" rel="icon">
     <style>
         * {
             margin: 0;
@@ -265,6 +322,52 @@ $products_json = json_encode($products_array);
                     </div>
                 </div>
             </div>
+
+            <!-- Stock Movements Section -->
+            <div class="row mb-4">
+                <div class="col">
+                    <h3>Stock Movements</h3>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="stockMovementsTable">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Movement Type</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Amount</th>
+                                    <th>Supplier</th>
+                                    <th>Movement Date</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while($movement = $stock_movements_result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $movement['product_name']; ?></td>
+                                    <td>
+                                        <span class="badge <?php echo ($movement['movement_type'] == 'Stock-in') ? 'bg-success' : 'bg-danger'; ?>">
+                                            <?php echo $movement['movement_type']; ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo $movement['quantity']; ?></td>
+                                    <td>₱<?php echo number_format($movement['unit_price'], 2); ?></td>
+                                    <td>₱<?php echo number_format($movement['total_amount'], 2); ?></td>
+                                    <td><?php echo $movement['supplier_name']; ?></td>
+                                    <td><?php echo date('M d, Y H:i', strtotime($movement['movement_date'])); ?></td>
+                                    <td><?php echo $movement['notes']; ?></td>
+                                </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -339,8 +442,8 @@ $products_json = json_encode($products_array);
                         <div class="mb-3">
                             <label class="form-label">Movement Type</label>
                             <select class="form-select" name="movement_type" required>
-                                <option value="in">Stock In</option>
-                                <option value="out">Stock Out</option>
+                                <option value="Stock-in">Stock In</option>
+                                <option value="Stock-out">Stock Out</option>
                             </select>
                         </div>
 
@@ -416,6 +519,20 @@ $products_json = json_encode($products_array);
                     "info": "Showing _START_ to _END_ of _TOTAL_ suppliers",
                     "infoEmpty": "Showing 0 to 0 of 0 suppliers",
                     "infoFiltered": "(filtered from _MAX_ total suppliers)"
+                }
+            });
+
+            // Initialize Stock Movements DataTable
+            $('#stockMovementsTable').DataTable({
+                "lengthMenu": [[10, 20, 30, -1], [10, 20, 30, "All"]],
+                "pageLength": 10,
+                "order": [[6, "desc"]], // Sort by movement date descending
+                "language": {
+                    "search": "Search movements:",
+                    "lengthMenu": "Show _MENU_ entries per page",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ movements",
+                    "infoEmpty": "Showing 0 to 0 of 0 movements",
+                    "infoFiltered": "(filtered from _MAX_ total movements)"
                 }
             });
 

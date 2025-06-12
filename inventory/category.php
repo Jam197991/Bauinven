@@ -198,6 +198,8 @@ $result = $conn->query($sql);
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <!-- Custom CSS -->
+    <link href="../img/bau.jpg" rel="icon">
+
     <style>
         * {
             margin: 0;
@@ -329,8 +331,11 @@ $result = $conn->query($sql);
                                                         <label class="form-label">Category Type</label>
                                                         <select class="form-select" name="category_type" required>
                                                             <option value="">Select Category Type</option>
-                                                            <option value="Food" <?php echo ($row['category_type'] == 'Food') ? 'selected' : ''; ?>>Food</option>
-                                                            <option value="Product" <?php echo ($row['category_type'] == 'Product') ? 'selected' : ''; ?>>Product</option>
+                                                            <option value="Drinks" <?php echo ($row['category_type'] == 'Drinks') ? 'selected' : ''; ?>>Drinks</option>
+                                                            <option value="Meals" <?php echo ($row['category_type'] == 'Meals') ? 'selected' : ''; ?>>Meals</option>
+                                                            <option value="Snacks" <?php echo ($row['category_type'] == 'Snacks') ? 'selected' : ''; ?>>Snacks</option>
+                                                            <option value="Bread" <?php echo ($row['category_type'] == 'Bread') ? 'selected' : ''; ?>>Bread</option>
+                                                            <option value="Muffins" <?php echo ($row['category_type'] == 'Muffins') ? 'selected' : ''; ?>>Muffins</option>
                                                         </select>
                                                     </div>
                                                     <div class="mb-3">
@@ -376,8 +381,11 @@ $result = $conn->query($sql);
                             <label class="form-label">Category Type</label>
                             <select class="form-select" name="category_type" required>
                                 <option value="">Select Category Type</option>
-                                <option value="Food">Food</option>
-                                <option value="Product">Product</option>
+                                <option value="Drinks">Drinks</option>
+                                <option value="Meals">Meals</option>
+                                <option value="Snacks">Snacks</option>
+                                <option value="Bread">Bread</option>
+                                <option value="Muffins">Muffins</option>
                             </select>
                         </div>
                         <div class="mb-3">

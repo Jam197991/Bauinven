@@ -36,6 +36,7 @@ $low_stock_result = mysqli_query($conn, $low_stock_query);
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Custom CSS -->
+    <link href="../img/bau.jpg" rel="icon">
     <style>
         * {
             margin: 0;

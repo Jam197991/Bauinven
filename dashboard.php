@@ -38,7 +38,7 @@ $products_result = $conn->query($products_sql);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BauApp - Ordering System</title>
-    <link href="img/leaf.png" rel="icon">
+    <link href="img/bau.jpg" rel="icon">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -109,13 +109,21 @@ $products_result = $conn->query($products_sql);
 
         .best-seller-icon {
             width: 100%;
-            height: 120px;
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: var(--background-color);
             border-radius: 8px;
             margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .best-seller-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
         }
 
         .best-seller-icon i {
@@ -380,30 +388,30 @@ $products_result = $conn->query($products_sql);
             }
         }
 
-        /* Smaller inventory info */
+        /* Bigger inventory info */
         .inventory-info {
             background: #f8f9fa;
-            border-radius: 5px;
-            padding: 0.5rem;
-            margin: 0.4rem 0;
-            border-left: 3px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin: 0.6rem 0;
+            border-left: 4px solid #dee2e6;
         }
 
         .stock-label {
             display: block;
-            font-size: 0.7rem;
+            font-size: 0.85rem;
             color: #6c757d;
             font-weight: 500;
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.3rem;
         }
 
         .stock-quantity {
             display: inline-block;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             font-weight: bold;
-            padding: 0.1rem 0.4rem;
-            border-radius: 10px;
-            margin-right: 0.2rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            margin-right: 0.3rem;
         }
 
         .stock-quantity.low-stock {
@@ -434,76 +442,84 @@ $products_result = $conn->query($products_sql);
             display: block;
             color: #dc3545;
             font-weight: 600;
-            font-size: 0.7rem;
-            margin-top: 0.2rem;
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
             text-align: center;
         }
 
         .out-of-stock-message i {
-            margin-right: 0.3rem;
+            margin-right: 0.4rem;
         }
 
         .stock-updated {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: #6c757d;
-            margin-top: 0.3rem;
+            margin-top: 0.4rem;
             font-style: italic;
         }
 
         /* Update product card to accommodate inventory info */
         .product-card {
             background: white;
-            border-radius: 8px;
-            padding: 0.6rem;
+            border-radius: 12px;
+            padding: 1rem;
             box-shadow: var(--card-shadow);
             transition: all 0.3s ease;
             border: 1px solid #eee;
             display: flex;
             flex-direction: column;
-            min-height: 160px;
-            max-width: 130px;
+            min-height: 220px;
+            max-width: 180px;
         }
 
         .product-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
             box-shadow: var(--hover-shadow);
         }
 
         .product-card .product-icon {
-            width: 35px;
-            height: 35px;
-            margin: 0 auto 0.4rem;
+            width: 100%;
+            height: 80px;
+            margin: 0 auto 0.8rem;
             display: flex;
             align-items: center;
             justify-content: center;
             background: var(--background-color);
-            border-radius: 5px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .product-card .product-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
         }
 
         .product-card .product-icon i {
-            font-size: 1.2rem;
+            font-size: 2rem;
             color: var(--primary-color);
         }
 
         .product-card h3 {
-            font-size: 0.75rem;
-            margin-bottom: 0.2rem;
-            line-height: 1.1;
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+            line-height: 1.2;
         }
 
         .product-card p {
-            font-size: 0.65rem;
-            margin-bottom: 0.3rem;
-            line-height: 1.1;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
             color: #666;
         }
 
         .product-card .price {
-            font-size: 0.8rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: var(--primary-color);
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
         }
 
         /* Out of Stock Product Card Styles */
@@ -545,18 +561,18 @@ $products_result = $conn->query($products_sql);
             box-shadow: none;
         }
 
-        /* Smaller quantity controls */
+        /* Bigger quantity controls */
         .quantity-controls {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
-            margin: 0.4rem 0;
+            gap: 0.6rem;
+            margin: 0.6rem 0;
         }
 
         .quantity-btn {
-            width: 24px;
-            height: 24px;
+            width: 32px;
+            height: 32px;
             border: none;
             border-radius: 50%;
             background: var(--accent-color);
@@ -565,7 +581,7 @@ $products_result = $conn->query($products_sql);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.9rem;
             transition: all 0.2s ease;
         }
 
@@ -587,9 +603,9 @@ $products_result = $conn->query($products_sql);
 
         .quantity-controls span {
             font-weight: bold;
-            min-width: 18px;
+            min-width: 24px;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 1rem;
         }
 
         .quantity-controls.at-limit .quantity-btn[onclick*="increaseQuantity"] {
@@ -603,52 +619,52 @@ $products_result = $conn->query($products_sql);
             background: #6c757d;
         }
 
-        /* Smaller add to cart button */
+        /* Bigger add to cart button */
         .add-to-cart-btn {
             background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 15px;
-            padding: 0.5rem 0.8rem;
+            border-radius: 20px;
+            padding: 0.7rem 1rem;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.2rem;
+            gap: 0.3rem;
             margin-top: auto;
         }
 
         .add-to-cart-btn:hover:not(:disabled) {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
             box-shadow: var(--hover-shadow);
             background: var(--accent-color);
         }
 
         .add-to-cart-btn i {
-            font-size: 0.7rem;
+            font-size: 0.9rem;
         }
 
-        /* Update products grid for smaller cards */
+        /* Update products grid for bigger cards */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 0.6rem;
-            padding: 1rem 0;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem 0;
         }
 
         @media (max-width: 768px) {
             .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-                gap: 0.5rem;
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 0.8rem;
             }
             
             .product-card {
-                min-height: 140px;
-                max-width: 110px;
-                padding: 0.5rem;
+                min-height: 200px;
+                max-width: 150px;
+                padding: 0.8rem;
             }
         }
 
@@ -658,54 +674,62 @@ $products_result = $conn->query($products_sql);
             text-decoration: none;
             color: var(--text-color);
             background: white;
-            border-radius: 8px;
-            padding: 0.6rem;
+            border-radius: 12px;
+            padding: 1rem;
             transition: all 0.3s ease;
             border: 1px solid #eee;
             position: relative;
             overflow: hidden;
-            min-height: 160px;
-            max-width: 130px;
+            min-height: 220px;
+            max-width: 180px;
         }
 
         .category-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
             box-shadow: var(--hover-shadow);
             border-color: var(--primary-color);
         }
 
         .category-card .category-icon {
-            width: 35px;
-            height: 35px;
-            margin: 0 auto 0.4rem;
+            width: 100%;
+            height: 80px;
+            margin: 0 auto 0.8rem;
             display: flex;
             align-items: center;
             justify-content: center;
             background: var(--background-color);
-            border-radius: 5px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .category-card .category-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
         }
 
         .category-card .category-icon i {
-            font-size: 1.2rem;
+            font-size: 2rem;
             color: var(--primary-color);
         }
 
         .category-card h3 {
-            font-size: 0.75rem;
-            margin-bottom: 0.2rem;
-            line-height: 1.1;
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+            line-height: 1.2;
             text-align: center;
         }
 
         .category-card .category-type {
             display: block;
-            padding: 0.2rem 0.5rem;
+            padding: 0.3rem 0.6rem;
             background: var(--background-color);
-            border-radius: 10px;
-            font-size: 0.65rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
             color: var(--primary-color);
             text-align: center;
-            margin-top: 0.3rem;
+            margin-top: 0.5rem;
         }
 
         .category-card.active {
@@ -724,21 +748,21 @@ $products_result = $conn->query($products_sql);
         /* Update categories grid to match products grid */
         .categories-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 0.6rem;
-            padding: 1rem 0;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem 0;
         }
 
         @media (max-width: 768px) {
             .categories-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-                gap: 0.5rem;
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 0.8rem;
             }
             
             .category-card {
-                min-height: 140px;
-                max-width: 110px;
-                padding: 0.5rem;
+                min-height: 200px;
+                max-width: 150px;
+                padding: 0.8rem;
             }
         }
 
@@ -779,6 +803,245 @@ $products_result = $conn->query($products_sql);
         .products-section h2 {
             transition: all 0.3s ease-in-out;
         }
+
+        /* Search Styles */
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+            margin-right: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus-within {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .search-icon {
+            color: #666;
+            margin-right: 0.5rem;
+            font-size: 1rem;
+        }
+
+        #search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            background: transparent;
+        }
+
+        #search-input::placeholder {
+            color: #999;
+        }
+
+        .clear-search-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 0.3rem;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clear-search-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            margin-top: 0.5rem;
+            border: 1px solid #ddd;
+        }
+
+        .search-results.active {
+            display: block !important;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #000000;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: #f8f9fa;
+            color: #000000;
+        }
+
+        .search-result-item.selected {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .search-result-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--background-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .search-result-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .search-result-icon i {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .search-result-info {
+            flex: 1;
+            min-width: 0;
+            color: #000000;
+        }
+
+        .search-result-name {
+            font-weight: 500;
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #000000;
+        }
+
+        .search-result-category {
+            font-size: 0.8rem;
+            color: #333333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-result-price {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 0.5rem;
+        }
+
+        .search-result-stock {
+            font-size: 0.8rem;
+            color: #333333;
+            margin-left: 0.5rem;
+        }
+
+        .no-search-results {
+            padding: 1rem;
+            text-align: center;
+            color: #333333;
+            font-style: italic;
+        }
+
+        .search-highlight {
+            background: #fff3cd;
+            padding: 0.1rem 0.2rem;
+            border-radius: 3px;
+            color: #000000;
+        }
+
+        /* Search highlight effect for product cards */
+        .product-card.search-highlighted {
+            animation: searchPulse 5s ease-in-out;
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 0 30px rgba(46, 125, 50, 0.6);
+            transform: scale(1.05);
+            z-index: 10;
+            position: relative;
+        }
+
+        @keyframes searchPulse {
+            0% {
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(46, 125, 50, 0.6);
+            }
+            50% {
+                transform: scale(1.08);
+                box-shadow: 0 0 40px rgba(46, 125, 50, 0.8);
+            }
+            100% {
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(46, 125, 50, 0.6);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive search */
+        @media (max-width: 768px) {
+            .header-actions {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .search-container {
+                max-width: 100%;
+                margin-right: 0;
+                order: 1;
+            }
+
+            .cart-summary {
+                order: 2;
+            }
+
+            .header-buttons {
+                order: 3;
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -801,6 +1064,16 @@ $products_result = $conn->query($products_sql);
                 </a>
             </div>
             <div class="header-actions">
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Search products..." autocomplete="off">
+                        <button type="button" id="clear-search" class="clear-search-btn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="search-results" class="search-results"></div>
+                </div>
                 <div class="cart-summary">
                     <i class="fas fa-shopping-cart"></i>
                     <span id="cart-count">0</span> items
@@ -829,7 +1102,16 @@ $products_result = $conn->query($products_sql);
                         while($product = $best_sellers_result->fetch_assoc()) {
                             echo '<div class="best-seller-card">';
                             echo '<div class="best-seller-badge"><i class="fas fa-fire"></i> #' . $rank . '</div>';
-                            echo '<div class="best-seller-icon"><i class="fas fa-' . ($product['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . '"></i></div>';
+                            
+                            // Display image if available, otherwise show icon
+                            if (!empty($product['image_url']) && file_exists($product['image_url'])) {
+                                echo '<div class="best-seller-icon">';
+                                echo '<img src="' . htmlspecialchars($product['image_url']) . '" alt="' . htmlspecialchars($product['product_name']) . '" class="best-seller-image">';
+                                echo '</div>';
+                            } else {
+                                echo '<div class="best-seller-icon"><i class="fas fa-' . ($product['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . '"></i></div>';
+                            }
+                            
                             echo '<div class="best-seller-info">';
                             echo '<h3>' . $product['product_name'] . '</h3>';
                             echo '<p>' . $product['description'] . '</p>';
@@ -855,7 +1137,16 @@ $products_result = $conn->query($products_sql);
                         while($category = $categories_result->fetch_assoc()) {
                             $active_class = ($selected_category == $category['category_id']) ? 'active' : '';
                             echo '<a href="javascript:void(0)" onclick="selectCategory(' . $category['category_id'] . ', \'' . addslashes($category['category_name']) . '\')" class="category-card ' . $active_class . '" data-category-id="' . $category['category_id'] . '">';
-                            echo '<div class="category-icon"><i class="fas fa-' . ($category['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . ' fa-3x"></i></div>';
+                            
+                            // Display image if available, otherwise show icon
+                            if (!empty($category['image_url']) && file_exists($category['image_url'])) {
+                                echo '<div class="category-icon">';
+                                echo '<img src="' . htmlspecialchars($category['image_url']) . '" alt="' . htmlspecialchars($category['category_name']) . '" class="category-image">';
+                                echo '</div>';
+                            } else {
+                                echo '<div class="category-icon"><i class="fas fa-' . ($category['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . ' fa-3x"></i></div>';
+                            }
+                            
                             echo '<h3>' . $category['category_name'] . '</h3>';
                             echo '<span class="category-type"><i class="fas fa-' . ($category['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . '"></i> ' . ucfirst($category['category_type']) . '</span>';
                             echo '</a>';
@@ -880,8 +1171,17 @@ $products_result = $conn->query($products_sql);
                             $is_out_of_stock = $product['inventory_quantity'] <= 0;
                             $card_class = $is_out_of_stock ? 'product-card out-of-stock' : 'product-card';
                             
-                            echo '<div class="' . $card_class . '">';
-                            echo '<div class="product-icon"><i class="fas fa-' . ($product['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . ' fa-3x"></i></div>';
+                            echo '<div class="' . $card_class . '" data-product-id="' . $product['product_id'] . '">';
+                            
+                            // Display image if available, otherwise show icon
+                            if (!empty($product['image_url']) && file_exists($product['image_url'])) {
+                                echo '<div class="product-icon">';
+                                echo '<img src="' . htmlspecialchars($product['image_url']) . '" alt="' . htmlspecialchars($product['product_name']) . '" class="product-image">';
+                                echo '</div>';
+                            } else {
+                                echo '<div class="product-icon"><i class="fas fa-' . ($product['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . ' fa-3x"></i></div>';
+                            }
+                            
                             echo '<h3>' . $product['product_name'] . '</h3>';
                             echo '<p>' . $product['description'] . '</p>';
                             echo '<p class="price">₱' . number_format($product['price'], 2) . '</p>';
@@ -1093,6 +1393,38 @@ $products_result = $conn->query($products_sql);
             }, 300);
         }
 
+        // Category selection that shows only a specific product
+        function selectCategoryAndShowProduct(categoryId, categoryName, selectedProduct) {
+            // Update URL without page refresh
+            const url = new URL(window.location.href);
+            url.searchParams.set('category', categoryId);
+            window.history.pushState({}, '', url);
+
+            // Update active category card
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.querySelector(`[data-category-id="${categoryId}"]`).classList.add('active');
+
+            // Show loading state
+            const productsSection = document.querySelector('.products-section');
+            const productsGrid = document.querySelector('.products-grid');
+            
+            // Add fade out effect
+            productsGrid.style.opacity = '0';
+            productsGrid.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                // Show loading indicator
+                productsGrid.innerHTML = '<div class="loading-products"><i class="fas fa-spinner fa-spin"></i> Loading product...</div>';
+                productsGrid.style.opacity = '1';
+                productsGrid.style.transform = 'translateY(0)';
+                
+                // Load and display only the selected product
+                loadSingleProduct(selectedProduct, categoryName);
+            }, 300);
+        }
+
         // AJAX function to load products
         function loadProducts(categoryId, categoryName) {
             const formData = new FormData();
@@ -1127,6 +1459,14 @@ $products_result = $conn->query($products_sql);
                     Object.keys(quantities).forEach(productId => {
                         updateQuantityDisplay(productId);
                     });
+                    
+                    // Check if there's a pending product to highlight
+                    if (window.pendingProductHighlight) {
+                        setTimeout(() => {
+                            highlightProductInGrid(window.pendingProductHighlight);
+                            window.pendingProductHighlight = null;
+                        }, 500);
+                    }
                 }, 200);
             })
             .catch(error => {
@@ -1136,6 +1476,235 @@ $products_result = $conn->query($products_sql);
                 productsGrid.style.opacity = '1';
                 productsGrid.style.transform = 'translateY(0)';
             });
+        }
+
+        // Function to load and display only a single product
+        function loadSingleProduct(product, categoryName) {
+            console.log('loadSingleProduct called with:', product, categoryName);
+            
+            const productsGrid = document.querySelector('.products-grid');
+            
+            // Create HTML for the single product
+            const productHtml = createProductCard(product);
+            
+            // Add "Show All Products" button - make sure category_id is available
+            let categoryId = product.category_id;
+            console.log('Category ID for show all button:', categoryId);
+            
+            // If category_id is not available, try to get it from the product data
+            if (!categoryId) {
+                // Try to get category_id from the category card
+                const categoryCards = document.querySelectorAll('.category-card');
+                for (let card of categoryCards) {
+                    if (card.querySelector('h3').textContent === categoryName) {
+                        categoryId = card.dataset.categoryId;
+                        break;
+                    }
+                }
+            }
+            
+            const showAllButton = `
+                <div class="show-all-products-container" style="text-align: center; margin-top: 2rem;">
+                    <button onclick="showAllProductsInCategory(${categoryId}, '${categoryName}')" class="show-all-btn" style="background: var(--accent-color); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 25px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-list"></i>
+                        Show All Products in ${categoryName}
+                    </button>
+                </div>
+            `;
+            
+            // Fade out loading
+            productsGrid.style.opacity = '0';
+            productsGrid.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                // Update products grid with only the selected product and show all button
+                productsGrid.innerHTML = productHtml + showAllButton;
+                
+                // Update section title to show it's a search result
+                const productsSectionTitle = document.querySelector('.products-section h2');
+                productsSectionTitle.innerHTML = `<i class="fas fa-search"></i> Search Result: ${product.product_name}`;
+                
+                // Fade in new content
+                productsGrid.style.opacity = '1';
+                productsGrid.style.transform = 'translateY(0)';
+                
+                // Highlight the product
+                setTimeout(() => {
+                    highlightProductInGrid(product.product_id);
+                }, 300);
+                
+                // Show success notification
+                showNotification(`Showing: ${product.product_name}`, 'success');
+            }, 200);
+        }
+
+        // Function to create a product card HTML
+        function createProductCard(product) {
+            const is_out_of_stock = product.is_out_of_stock;
+            const card_class = is_out_of_stock ? 'product-card out-of-stock' : 'product-card';
+            
+            let html = `<div class="${card_class}" data-product-id="${product.product_id}">`;
+            
+            // Product icon
+            if (product.image_url && product.image_url !== '') {
+                html += `<div class="product-icon">
+                    <img src="${product.image_url}" alt="${product.product_name}" class="product-image">
+                </div>`;
+            } else {
+                html += `<div class="product-icon">
+                    <i class="fas fa-${product.category_type === 'food' ? 'utensils' : 'shopping-bag'} fa-3x"></i>
+                </div>`;
+            }
+            
+            // Product info
+            html += `<h3>${product.product_name}</h3>`;
+            html += `<p>${product.description}</p>`;
+            html += `<p class="price">₱${parseFloat(product.price).toFixed(2)}</p>`;
+            
+            // Inventory info
+            const quantity_class = product.inventory_quantity <= 10 ? 'low-stock' : (product.inventory_quantity <= 30 ? 'medium-stock' : 'high-stock');
+            const final_quantity_class = is_out_of_stock ? 'out-of-stock-badge' : quantity_class;
+            
+            html += `<div class="inventory-info">
+                <span class="stock-label">Available Stock:</span>
+                <span class="stock-quantity ${final_quantity_class}">${product.inventory_quantity} Stocks</span>`;
+            
+            if (is_out_of_stock) {
+                html += `<div class="out-of-stock-message"><i class="fas fa-exclamation-triangle"></i> Out of Stock</div>`;
+            }
+            
+            html += `</div>`;
+            
+            // Quantity controls and add to cart button
+            if (!is_out_of_stock) {
+                html += `<div class="quantity-controls">
+                    <button onclick="decreaseQuantity(${product.product_id})" class="quantity-btn"><i class="fas fa-minus"></i></button>
+                    <span id="quantity-${product.product_id}">0</span>
+                    <button onclick="increaseQuantity(${product.product_id})" class="quantity-btn"><i class="fas fa-plus"></i></button>
+                </div>`;
+                html += `<button onclick="addToCart(${product.product_id}, '${product.product_name.replace(/'/g, "\\'")}', ${product.price})" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> Add to Cart</button>`;
+            } else {
+                html += `<div class="quantity-controls disabled">
+                    <button class="quantity-btn" disabled><i class="fas fa-minus"></i></button>
+                    <span id="quantity-${product.product_id}">0</span>
+                    <button class="quantity-btn" disabled><i class="fas fa-plus"></i></button>
+                </div>`;
+                html += `<button class="add-to-cart-btn disabled" disabled><i class="fas fa-ban"></i> Out of Stock</button>`;
+            }
+            
+            html += `</div>`;
+            
+            return html;
+        }
+
+        // Function to show all products in a category
+        function showAllProductsInCategory(categoryId, categoryName) {
+            console.log('showAllProductsInCategory called with:', categoryId, categoryName);
+            
+            // Validate inputs
+            if (!categoryId || !categoryName) {
+                console.error('Invalid categoryId or categoryName:', categoryId, categoryName);
+                showNotification('Error: Invalid category information', 'error');
+                return;
+            }
+            
+            // Update URL without page refresh
+            const url = new URL(window.location.href);
+            url.searchParams.set('category', categoryId);
+            window.history.pushState({}, '', url);
+
+            // Update active category card
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            const categoryCard = document.querySelector(`[data-category-id="${categoryId}"]`);
+            if (categoryCard) {
+                categoryCard.classList.add('active');
+            } else {
+                console.warn('Category card not found for ID:', categoryId);
+            }
+
+            // Show loading state
+            const productsGrid = document.querySelector('.products-grid');
+            if (!productsGrid) {
+                console.error('Products grid not found');
+                showNotification('Error: Products section not found', 'error');
+                return;
+            }
+            
+            // Add fade out effect
+            productsGrid.style.opacity = '0';
+            productsGrid.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                // Show loading indicator
+                productsGrid.innerHTML = '<div class="loading-products"><i class="fas fa-spinner fa-spin"></i> Loading all products...</div>';
+                productsGrid.style.opacity = '1';
+                productsGrid.style.transform = 'translateY(0)';
+                
+                // Load all products via AJAX
+                const formData = new FormData();
+                formData.append('category_id', categoryId);
+                formData.append('action', 'load_products');
+
+                fetch('load_products.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    console.log('Received HTML length:', html.length);
+                    
+                    if (html.trim() === '') {
+                        throw new Error('Empty response from server');
+                    }
+                    
+                    // Fade out loading
+                    productsGrid.style.opacity = '0';
+                    productsGrid.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        // Update products grid
+                        productsGrid.innerHTML = html;
+                        
+                        // Update section title
+                        const productsSectionTitle = document.querySelector('.products-section h2');
+                        if (productsSectionTitle) {
+                            productsSectionTitle.innerHTML = `<i class="fas fa-box"></i> ${categoryName}`;
+                        }
+                        
+                        // Fade in new content
+                        productsGrid.style.opacity = '1';
+                        productsGrid.style.transform = 'translateY(0)';
+                        
+                        // Reinitialize quantity displays
+                        if (typeof quantities !== 'undefined') {
+                            Object.keys(quantities).forEach(productId => {
+                                updateQuantityDisplay(productId);
+                            });
+                        }
+                        
+                        // Show success notification
+                        showNotification(`Showing all products in ${categoryName}`, 'success');
+                    }, 200);
+                })
+                .catch(error => {
+                    console.error('Error loading products:', error);
+                    const productsGrid = document.querySelector('.products-grid');
+                    if (productsGrid) {
+                        productsGrid.innerHTML = '<p class="no-products"><i class="fas fa-exclamation-triangle"></i> Error loading products. Please try again.</p>';
+                        productsGrid.style.opacity = '1';
+                        productsGrid.style.transform = 'translateY(0)';
+                    }
+                    showNotification('Error loading products: ' + error.message, 'error');
+                });
+            }, 300);
         }
 
         // Handle browser back/forward buttons
@@ -1161,6 +1730,250 @@ $products_result = $conn->query($products_sql);
                 productsGrid.innerHTML = '';
                 productsGrid.style.opacity = '1';
                 productsGrid.style.transform = 'translateY(0)';
+            }
+        });
+
+        // Search functionality
+        let searchTimeout;
+        let selectedSearchIndex = -1;
+        let searchResults = [];
+
+        const searchInput = document.getElementById('search-input');
+        const searchResultsContainer = document.getElementById('search-results');
+        const clearSearchBtn = document.getElementById('clear-search');
+
+        // Search input event listener
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            // Show/hide clear button
+            clearSearchBtn.style.display = query ? 'flex' : 'none';
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            if (query.length >= 2) {
+                // Add small delay to avoid too many requests
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 300);
+            } else {
+                hideSearchResults();
+            }
+        });
+
+        // Clear search button
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            hideSearchResults();
+            this.style.display = 'none';
+            searchInput.focus();
+        });
+
+        // Keyboard navigation for search results
+        searchInput.addEventListener('keydown', function(e) {
+            if (!searchResultsContainer.classList.contains('active')) return;
+
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    navigateSearchResults(1);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    navigateSearchResults(-1);
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    selectSearchResult();
+                    break;
+                case 'Escape':
+                    hideSearchResults();
+                    break;
+            }
+        });
+
+        // Click outside to close search results
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                hideSearchResults();
+            }
+        });
+
+        // Perform search
+        function performSearch(query) {
+            fetch(`search_products.php?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        searchResults = data.products;
+                        displaySearchResults(searchResults, query);
+                    } else {
+                        showNoSearchResults();
+                    }
+                })
+                .catch(error => {
+                    showNoSearchResults();
+                });
+        }
+
+        // Display search results
+        function displaySearchResults(products, query) {
+            if (products.length === 0) {
+                showNoSearchResults();
+                return;
+            }
+
+            const resultsHtml = products.map((product, index) => {
+                const highlightedName = highlightSearchTerm(product.product_name, query);
+                const highlightedCategory = highlightSearchTerm(product.category_name, query);
+                
+                return `
+                    <div class="search-result-item" data-index="${index}" data-product-id="${product.product_id}">
+                        <div class="search-result-icon">
+                            ${product.image_url && product.image_url !== '' 
+                                ? `<img src="${product.image_url}" alt="${product.product_name}">`
+                                : `<i class="fas fa-${product.category_type === 'food' ? 'utensils' : 'shopping-bag'}"></i>`
+                            }
+                        </div>
+                        <div class="search-result-info">
+                            <div class="search-result-name">${highlightedName}</div>
+                            <div class="search-result-category">${highlightedCategory}</div>
+                        </div>
+                        <div class="search-result-price">₱${parseFloat(product.price).toFixed(2)}</div>
+                        <div class="search-result-stock">${product.is_out_of_stock ? 'Out of Stock' : `${product.inventory_quantity} in stock`}</div>
+                    </div>
+                `;
+            }).join('');
+
+            searchResultsContainer.innerHTML = resultsHtml;
+            searchResultsContainer.classList.add('active');
+            selectedSearchIndex = -1;
+        }
+
+        // Show no search results
+        function showNoSearchResults() {
+            searchResultsContainer.innerHTML = `
+                <div class="no-search-results">
+                    <i class="fas fa-search"></i>
+                    <p>No products found</p>
+                </div>
+            `;
+            searchResultsContainer.classList.add('active');
+        }
+
+        // Hide search results
+        function hideSearchResults() {
+            searchResultsContainer.classList.remove('active');
+            selectedSearchIndex = -1;
+        }
+
+        // Navigate search results with arrow keys
+        function navigateSearchResults(direction) {
+            const items = searchResultsContainer.querySelectorAll('.search-result-item');
+            if (items.length === 0) return;
+
+            // Remove previous selection
+            if (selectedSearchIndex >= 0 && items[selectedSearchIndex]) {
+                items[selectedSearchIndex].classList.remove('selected');
+            }
+
+            // Calculate new index
+            selectedSearchIndex += direction;
+            if (selectedSearchIndex < 0) selectedSearchIndex = items.length - 1;
+            if (selectedSearchIndex >= items.length) selectedSearchIndex = 0;
+
+            // Add selection to new item
+            if (items[selectedSearchIndex]) {
+                items[selectedSearchIndex].classList.add('selected');
+                items[selectedSearchIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        // Select search result
+        function selectSearchResult() {
+            if (selectedSearchIndex >= 0 && searchResults[selectedSearchIndex]) {
+                const product = searchResults[selectedSearchIndex];
+                handleProductSelection(product);
+            }
+        }
+
+        // Handle product selection from search
+        function handleProductSelection(product) {
+            // Hide search results
+            hideSearchResults();
+            searchInput.value = '';
+            clearSearchBtn.style.display = 'none';
+
+            // Get category information for the product
+            fetch(`get_product_category.php?product_id=${product.product_id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.category_id) {
+                        // Navigate to the category
+                        const categoryCard = document.querySelector(`[data-category-id="${data.category_id}"]`);
+                        if (categoryCard) {
+                            const categoryName = categoryCard.querySelector('h3').textContent;
+                            
+                            // Show notification
+                            showNotification(`Loading ${product.product_name}...`, 'success');
+                            
+                            // Navigate to category and show only the selected product
+                            selectCategoryAndShowProduct(data.category_id, categoryName, product);
+                        } else {
+                            showNotification(`Selected: ${product.product_name}`, 'success');
+                        }
+                    } else {
+                        showNotification(`Selected: ${product.product_name}`, 'success');
+                    }
+                })
+                .catch(error => {
+                    showNotification(`Selected: ${product.product_name}`, 'success');
+                });
+        }
+
+        // Highlight search terms
+        function highlightSearchTerm(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(regex, '<span class="search-highlight">$1</span>');
+        }
+
+        // Highlight product in grid
+        function highlightProductInGrid(productId) {
+            const productCard = document.querySelector(`[data-product-id="${productId}"]`);
+            if (productCard) {
+                // Add highlight class
+                productCard.classList.add('search-highlighted');
+                
+                // Scroll to the product
+                productCard.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                
+                // Show success notification
+                const productName = productCard.querySelector('h3')?.textContent || 'Product';
+                showNotification(`Found: ${productName}`, 'success');
+                
+                // Remove highlight after 5 seconds
+                setTimeout(() => {
+                    productCard.classList.remove('search-highlighted');
+                }, 5000);
+            } else {
+                // If product card not found, show a notification
+                showNotification('Product loaded in the category', 'success');
+            }
+        }
+
+        // Add click event listeners to search results
+        searchResultsContainer.addEventListener('click', function(e) {
+            const resultItem = e.target.closest('.search-result-item');
+            if (resultItem) {
+                const index = parseInt(resultItem.dataset.index);
+                if (searchResults[index]) {
+                    handleProductSelection(searchResults[index]);
+                }
             }
         });
     </script>

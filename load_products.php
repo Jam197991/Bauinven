@@ -28,8 +28,17 @@ if ($products_result->num_rows > 0) {
         $is_out_of_stock = $product['inventory_quantity'] <= 0;
         $card_class = $is_out_of_stock ? 'product-card out-of-stock' : 'product-card';
         
-        echo '<div class="' . $card_class . '">';
-        echo '<div class="product-icon"><i class="fas fa-' . ($product['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . ' fa-3x"></i></div>';
+        echo '<div class="' . $card_class . '" data-product-id="' . $product['product_id'] . '">';
+        
+        // Display image if available, otherwise show icon
+        if (!empty($product['image_url']) && file_exists($product['image_url'])) {
+            echo '<div class="product-icon">';
+            echo '<img src="' . htmlspecialchars($product['image_url']) . '" alt="' . htmlspecialchars($product['product_name']) . '" class="product-image">';
+            echo '</div>';
+        } else {
+            echo '<div class="product-icon"><i class="fas fa-' . ($product['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . ' fa-3x"></i></div>';
+        }
+        
         echo '<h3>' . htmlspecialchars($product['product_name']) . '</h3>';
         echo '<p>' . htmlspecialchars($product['description']) . '</p>';
         echo '<p class="price">₱' . number_format($product['price'], 2) . '</p>';

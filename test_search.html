@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .search-container {
+            margin: 20px 0;
+        }
+        #search-input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #results {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 100px;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Test</h1>
+    
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search products...">
+        <button onclick="testSearch()">Test Search</button>
+    </div>
+    
+    <div id="results">
+        <p>Search results will appear here...</p>
+    </div>
+
+    <script>
+        let searchTimeout;
+        
+        document.getElementById('search-input').addEventListener('input', function() {
+            const query = this.value.trim();
+            console.log('Search input:', query);
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 300);
+            } else {
+                document.getElementById('results').innerHTML = '<p>Type at least 2 characters to search...</p>';
+            }
+        });
+        
+        function testSearch() {
+            const query = document.getElementById('search-input').value.trim() || 'lettuce';
+            performSearch(query);
+        }
+        
+        function performSearch(query) {
+            console.log('Performing search for:', query);
+            
+            fetch(`search_products.php?q=${encodeURIComponent(query)}`)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    displayResults(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('results').innerHTML = '<p>Error: ' + error.message + '</p>';
+                });
+        }
+        
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (data.success && data.products.length > 0) {
+                let html = '<h3>Found ' + data.products.length + ' products:</h3>';
+                data.products.forEach(product => {
+                    html += `
+                        <div class="result-item">
+                            <strong>${product.product_name}</strong><br>
+                            Category: ${product.category_name}<br>
+                            Price: ₱${product.price}<br>
+                            Stock: ${product.inventory_quantity}
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.innerHTML = '<p>No products found</p>';
+            }
+        }
+    </script>
+</body>
+</html> 
