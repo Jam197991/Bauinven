@@ -1,6 +1,16 @@
 <?php
 session_start();
 include '../includes/database.php';
+include '../includes/audit.php';
+
+if (!isset($_SESSION['staff_id'])) {
+    echo "<script>
+            alert('Please log in first');
+            window.location.href = '../index.php';
+        </script>";
+    exit();
+}
+
 
 // Display error message if exists
 if (isset($_SESSION['error'])) {

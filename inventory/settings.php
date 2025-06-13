@@ -2,9 +2,11 @@
 session_start();
 include '../includes/database.php';
 
-// Check if user is logged in
 if (!isset($_SESSION['staff_id'])) {
-    header("Location: login.php");
+    echo "<script>
+            alert('Please log in first');
+            window.location.href = '../index.php';
+        </script>";
     exit();
 }
 
