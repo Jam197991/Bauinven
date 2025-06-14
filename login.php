@@ -22,10 +22,7 @@ $error = ''; // Initialize error variable
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
-    $password = $_POST['password'];
-    $ip = $_SERVER['REMOTE_ADDR'];
-    $now = date('Y-m-d H:i:s');
-    $max_attempts = 5;
+    $password =  md5($_POST['password']);
 
     if (empty($username) || empty($password)) {
         $error = 'Please enter both username and password.';
@@ -33,20 +30,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql = "SELECT * FROM inventory_staff WHERE username = ? AND password = ? LIMIT 1";
         $stmt = $connection->prepare($sql);
         $stmt->bind_param("ss", $username, $password);
-            $stmt->execute();
-            $result = $stmt->get_result();  
-            
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $_SESSION['staff_id'] = $row['staff_id'];
-                $_SESSION['username'] = $row['username'];
-                $_SESSION['role'] = $row['role'];
-    
-                // Redirect to inventory dashboard
-                    header('Location: inventory/dashboard.php');
-                exit();
-            } else {
-                $error = 'Invalid username or password. Please try again.';
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $_SESSION['staff_id'] = $row['staff_id'];
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['role'] = $row['role'];
+
+            // Redirect to inventory dashboard
+            header('Location: inventory/dashboard.php');
+            exit();
+        } else {
+            $error = 'Invalid username or password. Please try again.';
         }
     }
 }
@@ -60,7 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Inventory Staff Login - BauApp</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="img/bau.jpg" rel="icon">
     <style>
         :root {
             --primary-color: #FF9800;

@@ -245,7 +245,15 @@ function updateCart() {
     
     if (!cartItems) return;
     
+    // Clear cart items but preserve discount info if it exists
+    const existingDiscountInfo = cartItems.querySelector('.discount-info');
     cartItems.innerHTML = '';
+    
+    // Restore discount info if it exists
+    if (existingDiscountInfo) {
+        cartItems.appendChild(existingDiscountInfo);
+    }
+    
     let total = 0;
     let count = 0;
 
@@ -291,6 +299,11 @@ function updateCart() {
 
     // Save cart to localStorage
     saveCart();
+    
+    // Update discount button visibility if the function exists
+    if (typeof updateDiscountButton === 'function') {
+        updateDiscountButton();
+    }
 }
 
 function checkout() {
@@ -417,11 +430,49 @@ function showReceipt() {
         }, index * 50);
     });
 
+    // Check if discount is applied (from dashboard discount functionality)
+    let finalTotal = total;
+    let discountInfo = null;
+    
+    // Try to get discount info from the dashboard if it exists
+    if (typeof window.discountInfo !== 'undefined' && window.discountInfo) {
+        discountInfo = window.discountInfo;
+        const discountAmount = discountInfo.selectedProducts.reduce((sum, item) => sum + item.total, 0) * discountInfo.discountRate;
+        finalTotal = total - discountAmount;
+        
+        // Add discount information to receipt
+        const discountInfoElement = document.createElement('div');
+        discountInfoElement.className = 'receipt-discount-info';
+        discountInfoElement.style.cssText = 'background: #e8f5e8; padding: 1rem; margin: 1rem 0; border-radius: 8px; border-left: 4px solid #28a745;';
+        
+        const totalDiscountedItems = discountInfo.selectedProducts.reduce((sum, item) => sum + item.quantity, 0);
+        
+        discountInfoElement.innerHTML = `
+            <h4 style="margin: 0 0 0.5rem 0; color: #28a745;">
+                <i class="fas fa-percentage"></i> ${discountInfo.customerType} Discount Applied
+            </h4>
+            <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                <strong>Customer:</strong> ${discountInfo.customerName}
+            </p>
+            <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                <strong>ID Number:</strong> ${discountInfo.customerId}
+            </p>
+            <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                <strong>Discounted Items:</strong> ${discountInfo.selectedProducts.length} products (${totalDiscountedItems} total items)
+            </p>
+            <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                <strong>Discount Amount:</strong> ₱${discountAmount.toFixed(2)}
+            </p>
+        `;
+        
+        receiptItems.appendChild(discountInfoElement);
+    }
+
     // Add total with spring animation
     receiptTotal.innerHTML = `
         <div class="receipt-total-row">
             <span>Total Amount:</span>
-            <span>₱${total.toFixed(2)}</span>
+            <span>₱${finalTotal.toFixed(2)}</span>
         </div>
     `;
 

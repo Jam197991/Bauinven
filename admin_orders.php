@@ -34,9 +34,13 @@ try {
     die("Database connection error: " . $e->getMessage());
 }
 
-// Get all orders with their items
+// Get all orders with their items and discount information
 $orders_sql = "SELECT o.*, 
-                      GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.product_name) SEPARATOR ', ') as items
+                      GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.product_name, 
+                                        CASE WHEN oi.is_pwd_discounted = 1 THEN ' (Discounted)' ELSE '' END,
+                                        ' - ₱', 
+                                        CASE WHEN oi.is_pwd_discounted = 1 THEN oi.discounted_price ELSE oi.price END
+                                      ) SEPARATOR ', ') as items
                FROM orders o
                LEFT JOIN order_items oi ON o.order_id = oi.order_id
                LEFT JOIN products p ON oi.product_id = p.product_id
@@ -162,6 +166,50 @@ $orders_result = $conn->query($orders_sql);
                 justify-content: center;
             }
         }
+
+        .status-badge.completed {
+            background: #28a745;
+        }
+
+        /* Discount Badge Styles */
+        .discount-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .discount-badge i {
+            margin-right: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        .discount-badge small {
+            display: block;
+            margin-top: 0.2rem;
+            opacity: 0.9;
+            font-size: 0.7rem;
+        }
+
+        .view-details-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .view-details-btn:hover {
+            background: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -185,7 +233,9 @@ $orders_result = $conn->query($orders_sql);
                     <th>Date</th>
                     <th>Items</th>
                     <th>Total Amount</th>
+                    <th>Discount Info</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -193,16 +243,31 @@ $orders_result = $conn->query($orders_sql);
                 if ($orders_result->num_rows > 0) {
                     while($order = $orders_result->fetch_assoc()) {
                         $status_class = 'status-' . strtolower($order['status']);
+                        
+                        // Prepare discount info display
+                        $discount_info = '';
+                        if ($order['discount_type'] && $order['discount_name']) {
+                            $discount_info = '<div class="discount-badge">';
+                            $discount_info .= '<i class="fas fa-percentage"></i> ' . $order['discount_type'];
+                            $discount_info .= '<br><small>' . $order['discount_name'] . '</small>';
+                            if ($order['discount_id']) {
+                                $discount_info .= '<br><small>ID: ' . $order['discount_id'] . '</small>';
+                            }
+                            $discount_info .= '</div>';
+                        }
+                        
                         echo '<tr>';
                         echo '<td>#' . $order['order_id'] . '</td>';
                         echo '<td>' . date('M d, Y h:i A', strtotime($order['order_date'])) . '</td>';
                         echo '<td>' . $order['items'] . '</td>';
                         echo '<td>₱' . number_format($order['total_amount'], 2) . '</td>';
+                        echo '<td>' . $discount_info . '</td>';
                         echo '<td><span class="status-badge ' . $status_class . '">' . ucfirst($order['status']) . '</span></td>';
+                        echo '<td><a href="view_order_details.php?order_id=' . $order['order_id'] . '" class="view-details-btn">View Details</a></td>';
                         echo '</tr>';
                     }
                 } else {
-                    echo '<tr><td colspan="5" style="text-align: center;">No orders found</td></tr>';
+                    echo '<tr><td colspan="6" style="text-align: center;">No orders found</td></tr>';
                 }
                 ?>
             </tbody>

@@ -1042,6 +1042,372 @@ $products_result = $conn->query($products_sql);
                 justify-content: center;
             }
         }
+
+        /* Discount Modal Styles */
+        .discount-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .discount-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .discount-header h2 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .discount-body {
+            padding: 1.5rem;
+        }
+
+        .customer-info-section,
+        .discount-products-section,
+        .discount-summary {
+            margin-bottom: 2rem;
+        }
+
+        .customer-info-section h3,
+        .discount-products-section h3,
+        .discount-summary h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .discount-products-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .discount-product-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .discount-product-item:hover {
+            background: var(--background-color);
+            border-color: var(--primary-color);
+        }
+
+        .discount-product-item.selected {
+            background: rgba(46, 125, 50, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .discount-product-checkbox {
+            margin-right: 1rem;
+            transform: scale(1.2);
+        }
+
+        .discount-product-info {
+            flex: 1;
+        }
+
+        .discount-product-name {
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 0.2rem;
+        }
+
+        .discount-product-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .discount-product-price {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 1rem;
+        }
+
+        /* New quantity controls for discount */
+        .discount-product-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .discount-quantity-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .discount-quantity-controls label {
+            font-size: 0.8rem;
+            color: var(--text-color);
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .quantity-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 0.2rem;
+        }
+
+        .discount-qty-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 6px;
+            background: var(--accent-color);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .discount-qty-btn:hover {
+            background: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .discount-qty-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .discount-qty-input {
+            width: 50px;
+            height: 28px;
+            border: none;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-color);
+            background: transparent;
+        }
+
+        .discount-qty-input:focus {
+            outline: none;
+        }
+
+        .discount-qty-input::-webkit-inner-spin-button,
+        .discount-qty-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .discount-qty-input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .discount-summary {
+            background: var(--background-color);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--primary-color);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-row.total {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-top: 2px solid var(--primary-color);
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+        }
+
+        .discount-actions {
+            display: flex;
+            gap: 1rem;
+            padding: 1.5rem;
+            border-top: 1px solid #ddd;
+            background: #f8f9fa;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .apply-discount-btn,
+        .cancel-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .apply-discount-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .apply-discount-btn:hover {
+            background: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        /* Cart Actions Styles */
+        .cart-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .discount-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .discount-btn:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .discount-btn.active {
+            background: var(--primary-color);
+        }
+
+        /* Responsive Discount Modal */
+        @media (max-width: 768px) {
+            .discount-content {
+                width: 95%;
+                max-height: 95vh;
+            }
+
+            .discount-header {
+                padding: 1rem;
+            }
+
+            .discount-header h2 {
+                font-size: 1.2rem;
+            }
+
+            .discount-body {
+                padding: 1rem;
+            }
+
+            .discount-actions {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .apply-discount-btn,
+            .cancel-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1179,7 +1545,7 @@ $products_result = $conn->query($products_sql);
                                 echo '<img src="' . htmlspecialchars($product['image_url']) . '" alt="' . htmlspecialchars($product['product_name']) . '" class="product-image">';
                                 echo '</div>';
                             } else {
-                                echo '<div class="product-icon"><i class="fas fa-' . ($product['category_type'] == 'vegetable' ? 'carrot' : 'apple-alt') . ' fa-3x"></i></div>';
+                                echo '<div class="product-icon"><i class="fas fa-' . ($product['category_type'] == 'food' ? 'utensils' : 'shopping-bag') . ' fa-3x"></i></div>';
                             }
                             
                             echo '<h3>' . $product['product_name'] . '</h3>';
@@ -1232,7 +1598,12 @@ $products_result = $conn->query($products_sql);
                 <div class="cart-total">
                     <h3>Total: <span id="total-amount">₱0.00</span></h3>
                 </div>
-                <button onclick="checkout()" class="checkout-btn"><i class="fas fa-credit-card"></i> Proceed to Checkout</button>
+                <div class="cart-actions">
+                    <button onclick="openDiscountModal()" class="discount-btn" id="discount-btn" style="display: none;">
+                        <i class="fas fa-percentage"></i> Add Discount
+                    </button>
+                    <button onclick="checkout()" class="checkout-btn"><i class="fas fa-credit-card"></i> Proceed to Checkout</button>
+                </div>
             </div>
         </main>
     </div>
@@ -1249,6 +1620,9 @@ $products_result = $conn->query($products_sql);
             <div class="receipt-items"></div>
             <div class="receipt-total"></div>
             <div class="receipt-footer">
+                <p><i><h5>NOTE: NOT SERVE AS YOUR ORDER OFFICIAL RECEIPT</h5><i></p>
+                <p><i><h5>FOR INVENTORY & PRICE LIST ONLY</h5></i></p>
+                <br>
                 <p>Thank you for your purchase!</p>
             </div>
             <div class="receipt-actions">
@@ -1260,6 +1634,70 @@ $products_result = $conn->query($products_sql);
                 </button>
                 <button onclick="closeReceipt()" class="close-btn">
                     <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discount Modal -->
+    <div id="discount-modal" class="modal">
+        <div class="discount-content">
+            <div class="discount-header">
+                <h2><i class="fas fa-percentage"></i> Add Discount</h2>
+                <button onclick="closeDiscountModal()" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="discount-body">
+                <div class="customer-info-section">
+                    <h3><i class="fas fa-user"></i> Customer Information</h3>
+                    <div class="form-group">
+                        <label for="customer-type">Customer Type:</label>
+                        <select id="customer-type" required>
+                            <option value="">Select customer type</option>
+                            <option value="PWD">PWD (Persons with Disabilities)</option>
+                            <option value="SENIOR CITEZEN">SC (Senior Citizen)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-name">Full Name:</label>
+                        <input type="text" id="customer-name" placeholder="Enter customer's full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-id">ID Number:</label>
+                        <input type="text" id="customer-id" placeholder="Enter customer's ID number" required>
+                    </div>
+                </div>
+                
+                <div class="discount-products-section">
+                    <h3><i class="fas fa-tags"></i> Select Products for Discount</h3>
+                    <div class="discount-products-list" id="discount-products-list">
+                        <!-- Products will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="discount-summary">
+                    <h3><i class="fas fa-calculator"></i> Discount Summary</h3>
+                    <div class="summary-row">
+                        <span>Original Total:</span>
+                        <span id="original-total">₱0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Discount Amount:</span>
+                        <span id="discount-amount">₱0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Final Total:</span>
+                        <span id="final-total">₱0.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="discount-actions">
+                <button onclick="applyDiscount()" class="apply-discount-btn">
+                    <i class="fas fa-check"></i> Apply Discount
+                </button>
+                <button onclick="closeDiscountModal()" class="cancel-btn">
+                    <i class="fas fa-times"></i> Cancel
                 </button>
             </div>
         </div>
@@ -1976,6 +2414,509 @@ $products_result = $conn->query($products_sql);
                 }
             }
         });
+
+        // Discount functionality
+        let discountApplied = false;
+        let discountInfo = null;
+        let selectedDiscountProducts = [];
+
+        // Make discount variables globally accessible
+        window.discountApplied = discountApplied;
+        window.discountInfo = discountInfo;
+        window.selectedDiscountProducts = selectedDiscountProducts;
+
+        // Show/hide discount button based on cart items
+        function updateDiscountButton() {
+            const discountBtn = document.getElementById('discount-btn');
+            if (discountBtn) {
+                if (cart.length > 0) {
+                    discountBtn.style.display = 'flex';
+                } else {
+                    discountBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // Open discount modal
+        function openDiscountModal() {
+            if (cart.length === 0) {
+                showNotification('Your cart is empty!', 'error');
+                return;
+            }
+
+            const modal = document.getElementById('discount-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                populateDiscountProducts();
+                updateDiscountSummary();
+            }
+        }
+
+        // Close discount modal
+        function closeDiscountModal() {
+            const modal = document.getElementById('discount-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                // Reset form
+                document.getElementById('customer-type').value = '';
+                document.getElementById('customer-name').value = '';
+                document.getElementById('customer-id').value = '';
+                selectedDiscountProducts = [];
+                updateDiscountSummary();
+            }
+        }
+
+        // Populate discount products list
+        function populateDiscountProducts() {
+            const productsList = document.getElementById('discount-products-list');
+            if (!productsList) return;
+
+            productsList.innerHTML = '';
+            
+            cart.forEach(item => {
+                const productItem = document.createElement('div');
+                productItem.className = 'discount-product-item';
+                productItem.innerHTML = `
+                    <div class="discount-product-info">
+                        <div class="discount-product-name">${item.name}</div>
+                        <div class="discount-product-details">Available: ${item.quantity} | Unit Price: ₱${item.price.toFixed(2)}</div>
+                    </div>
+                    <div class="discount-product-controls">
+                        <div class="discount-quantity-controls">
+                            <label for="discount-qty-${item.id}">Discount Qty:</label>
+                            <div class="quantity-input-group">
+                                <button type="button" onclick="decreaseDiscountQuantity(${item.id}, ${item.quantity})" class="discount-qty-btn">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" id="discount-qty-${item.id}" 
+                                       value="0" min="0" max="${item.quantity}" 
+                                       onchange="updateDiscountQuantity(${item.id}, '${item.name}', ${item.price}, ${item.quantity})"
+                                       class="discount-qty-input">
+                                <button type="button" onclick="increaseDiscountQuantity(${item.id}, ${item.quantity})" class="discount-qty-btn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="discount-product-price">
+                            <span id="discount-total-${item.id}">₱0.00</span>
+                        </div>
+                    </div>
+                `;
+                productsList.appendChild(productItem);
+            });
+        }
+
+        // Increase discount quantity
+        function increaseDiscountQuantity(productId, maxQuantity) {
+            const input = document.getElementById(`discount-qty-${productId}`);
+            const currentValue = parseInt(input.value) || 0;
+            if (currentValue < maxQuantity) {
+                input.value = currentValue + 1;
+                updateDiscountQuantity(productId, '', 0, maxQuantity);
+            }
+        }
+
+        // Decrease discount quantity
+        function decreaseDiscountQuantity(productId, maxQuantity) {
+            const input = document.getElementById(`discount-qty-${productId}`);
+            const currentValue = parseInt(input.value) || 0;
+            if (currentValue > 0) {
+                input.value = currentValue - 1;
+                updateDiscountQuantity(productId, '', 0, maxQuantity);
+            }
+        }
+
+        // Update discount quantity and recalculate
+        function updateDiscountQuantity(productId, productName, productPrice, maxQuantity) {
+            const input = document.getElementById(`discount-qty-${productId}`);
+            const quantity = parseInt(input.value) || 0;
+            
+            // Ensure quantity doesn't exceed available quantity
+            if (quantity > maxQuantity) {
+                input.value = maxQuantity;
+                quantity = maxQuantity;
+            }
+            
+            // Find the cart item to get current product info
+            const cartItem = cart.find(item => item.id === productId);
+            if (!cartItem) return;
+            
+            // Update the discount total display
+            const discountTotal = quantity * cartItem.price;
+            document.getElementById(`discount-total-${productId}`).textContent = `₱${discountTotal.toFixed(2)}`;
+            
+            // Update selected discount products
+            updateSelectedDiscountProducts();
+        }
+
+        // Update selected discount products based on current quantities
+        function updateSelectedDiscountProducts() {
+            selectedDiscountProducts = [];
+            
+            cart.forEach(item => {
+                const discountQtyInput = document.getElementById(`discount-qty-${item.id}`);
+                if (discountQtyInput) {
+                    const discountQuantity = parseInt(discountQtyInput.value) || 0;
+                    if (discountQuantity > 0) {
+                        selectedDiscountProducts.push({
+                            id: item.id,
+                            name: item.name,
+                            price: item.price,
+                            quantity: discountQuantity, // Only the discounted quantity
+                            total: item.price * discountQuantity
+                        });
+                    }
+                }
+            });
+            
+            updateDiscountSummary();
+        }
+
+        // Update discount summary
+        function updateDiscountSummary() {
+            const originalTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            const selectedTotal = selectedDiscountProducts.reduce((total, item) => total + item.total, 0);
+            
+            // Calculate discount (20% for PWD/SC)
+            const discountRate = 0.20; // 20% discount
+            const discountAmount = selectedTotal * discountRate;
+            const finalTotal = originalTotal - discountAmount;
+            
+            document.getElementById('original-total').textContent = `₱${originalTotal.toFixed(2)}`;
+            document.getElementById('discount-amount').textContent = `₱${discountAmount.toFixed(2)}`;
+            document.getElementById('final-total').textContent = `₱${finalTotal.toFixed(2)}`;
+        }
+
+        // Apply discount
+        function applyDiscount() {
+            const customerType = document.getElementById('customer-type').value;
+            const customerName = document.getElementById('customer-name').value.trim();
+            const customerId = document.getElementById('customer-id').value.trim();
+            
+            // Validate form
+            if (!customerType || !customerName || !customerId) {
+                showNotification('Please fill in all customer information fields!', 'error');
+                return;
+            }
+            
+            if (selectedDiscountProducts.length === 0) {
+                showNotification('Please select at least one product for discount!', 'error');
+                return;
+            }
+            
+            // Store discount information
+            discountInfo = {
+                customerType: customerType,
+                customerName: customerName,
+                customerId: customerId,
+                selectedProducts: selectedDiscountProducts,
+                discountRate: 0.20,
+                appliedAt: new Date()
+            };
+            
+            discountApplied = true;
+            
+            // Update global variables
+            window.discountApplied = discountApplied;
+            window.discountInfo = discountInfo;
+            window.selectedDiscountProducts = selectedDiscountProducts;
+            
+            // Update cart display to show discount
+            updateCartWithDiscount();
+            
+            // Close modal
+            closeDiscountModal();
+            
+            // Show success notification
+            const discountAmount = selectedDiscountProducts.reduce((total, item) => total + (item.price * item.quantity), 0) * 0.20;
+            showNotification(`Discount applied! Saved ₱${discountAmount.toFixed(2)} for ${customerType} customer.`, 'success');
+        }
+
+        // Update cart display with discount information
+        function updateCartWithDiscount() {
+            const cartItems = document.getElementById('cart-items');
+            const discountBtn = document.getElementById('discount-btn');
+            
+            if (discountApplied && discountInfo) {
+                const totalDiscountedItems = discountInfo.selectedProducts.reduce((sum, item) => sum + item.quantity, 0);
+                
+                // Add discount info to cart display
+                const discountInfoHtml = `
+                    <div class="discount-info" style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary-color);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color);">
+                            <i class="fas fa-percentage"></i> ${discountInfo.customerType} Discount Applied
+                        </h4>
+                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                            <strong>Customer:</strong> ${discountInfo.customerName}
+                        </p>
+                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                            <strong>ID:</strong> ${discountInfo.customerId}
+                        </p>
+                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                            <strong>Discounted Items:</strong> ${discountInfo.selectedProducts.length} products (${totalDiscountedItems} total items)
+                        </p>
+                        <button onclick="removeDiscount()" style="background: #dc3545; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; margin-top: 0.5rem;">
+                            <i class="fas fa-times"></i> Remove Discount
+                        </button>
+                    </div>
+                `;
+                
+                // Insert discount info at the beginning of cart items
+                cartItems.insertAdjacentHTML('afterbegin', discountInfoHtml);
+                
+                // Update discount button
+                if (discountBtn) {
+                    discountBtn.innerHTML = '<i class="fas fa-check"></i> Discount Applied';
+                    discountBtn.classList.add('active');
+                    discountBtn.disabled = true;
+                }
+            }
+        }
+
+        // Remove discount
+        function removeDiscount() {
+            discountApplied = false;
+            discountInfo = null;
+            selectedDiscountProducts = [];
+            
+            // Update global variables
+            window.discountApplied = discountApplied;
+            window.discountInfo = discountInfo;
+            window.selectedDiscountProducts = selectedDiscountProducts;
+            
+            // Remove discount info from cart display
+            const discountInfoElement = document.querySelector('.discount-info');
+            if (discountInfoElement) {
+                discountInfoElement.remove();
+            }
+            
+            // Reset discount button
+            const discountBtn = document.getElementById('discount-btn');
+            if (discountBtn) {
+                discountBtn.innerHTML = '<i class="fas fa-percentage"></i> Add Discount';
+                discountBtn.classList.remove('active');
+                discountBtn.disabled = false;
+            }
+            
+            // Update cart totals
+            updateCart();
+            
+            showNotification('Discount removed successfully!', 'success');
+        }
+
+        // Override the existing updateCart function to include discount functionality
+        const originalUpdateCart = window.updateCart;
+        window.updateCart = function() {
+            if (originalUpdateCart) {
+                originalUpdateCart();
+            }
+            
+            // Update discount button visibility
+            updateDiscountButton();
+            
+            // If discount is applied, update the display
+            if (discountApplied && discountInfo) {
+                updateCartWithDiscount();
+            }
+        };
+
+        // Override the existing checkout function to include discount information
+        const originalCheckout = window.checkout;
+        window.checkout = function() {
+            if (cart.length === 0) {
+                showNotification('Your cart is empty!', 'error');
+                return;
+            }
+
+            // Show receipt modal with discount information
+            showReceiptWithDiscount();
+        };
+
+        // Show receipt with discount information
+        function showReceiptWithDiscount() {
+            const modal = document.getElementById('receipt-modal');
+            const receiptItems = document.querySelector('.receipt-items');
+            const receiptTotal = document.querySelector('.receipt-total');
+            
+            if (!modal || !receiptItems || !receiptTotal) return;
+            
+            // Set current date and time
+            const now = new Date();
+            document.getElementById('receipt-date').textContent = now.toLocaleDateString();
+            document.getElementById('receipt-time').textContent = now.toLocaleTimeString();
+            
+            // Clear previous items
+            receiptItems.innerHTML = '';
+            
+            let total = 0;
+            
+            // Add cart items
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                // Check if this item has discount and get the discounted quantity
+                const hasDiscount = discountApplied && discountInfo && 
+                    discountInfo.selectedProducts.some(discItem => discItem.id === item.id);
+                
+                const discountedItem = hasDiscount ? 
+                    discountInfo.selectedProducts.find(discItem => discItem.id === item.id) : null;
+                
+                const discountAmount = hasDiscount ? discountedItem.total * 0.20 : 0;
+                const finalItemTotal = itemTotal - discountAmount;
+                
+                receiptItems.innerHTML += `
+                    <div class="receipt-item">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span>₱${itemTotal.toFixed(2)}</span>
+                    </div>
+                    ${hasDiscount ? `<div class="receipt-discount" style="color: #28a745; font-size: 0.9rem; margin-left: 1rem;">
+                        <span>${discountInfo.customerType} Discount (20%) on ${discountedItem.quantity} item(s)</span>
+                        <span>-₱${discountAmount.toFixed(2)}</span>
+                    </div>` : ''}
+                `;
+            });
+            
+            // Calculate final total with discount
+            const finalTotal = discountApplied && discountInfo ? 
+                total - (discountInfo.selectedProducts.reduce((sum, item) => sum + item.total, 0) * 0.20) : 
+                total;
+            
+            // Add discount information to receipt if applied
+            if (discountApplied && discountInfo) {
+                const totalDiscountedItems = discountInfo.selectedProducts.reduce((sum, item) => sum + item.quantity, 0);
+                receiptItems.innerHTML += `
+                    <div class="receipt-discount-info" style="background: #e8f5e8; padding: 1rem; margin: 1rem 0; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #28a745;">
+                            <i class="fas fa-percentage"></i> ${discountInfo.customerType} Discount Applied
+                        </h4>
+                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                            <strong>Customer:</strong> ${discountInfo.customerName}
+                        </p>
+                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                            <strong>ID Number:</strong> ${discountInfo.customerId}
+                        </p>
+                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                            <strong>Discounted Items:</strong> ${discountInfo.selectedProducts.length} products (${totalDiscountedItems} total items)
+                        </p>
+                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                            <strong>Discount Amount:</strong> ₱${(total - finalTotal).toFixed(2)}
+                        </p>
+                    </div>
+                `;
+            }
+            
+            // Update total
+            receiptTotal.innerHTML = `
+                <div class="receipt-total-row">
+                    <span>Total:</span>
+                    <span>₱${finalTotal.toFixed(2)}</span>
+                </div>
+            `;
+            
+            // Show modal
+            modal.style.display = 'flex';
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const discountModal = document.getElementById('discount-modal');
+            if (e.target === discountModal) {
+                closeDiscountModal();
+            }
+        });
+
+        // Initialize discount button visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDiscountButton();
+        });
+
+        // Function to add order to database
+        function addOrder() {
+            if (cart.length === 0) {
+                showNotification('Your cart is empty!', 'error');
+                return;
+            }
+
+            // Prepare order data
+            const orderData = {
+                items: cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+                total: parseFloat(document.getElementById('total-amount').textContent.replace('₱', '')),
+                discount_info: discountApplied && discountInfo ? {
+                    customerType: discountInfo.customerType,
+                    customerName: discountInfo.customerName,
+                    customerId: discountInfo.customerId,
+                    selectedProducts: discountInfo.selectedProducts
+                } : null
+            };
+
+            // Show loading state
+            const addOrderBtn = document.querySelector('.add-order-btn');
+            const originalText = addOrderBtn.innerHTML;
+            addOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Order...';
+            addOrderBtn.disabled = true;
+
+            // Send order to server
+            fetch('save_order_with_discount.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear cart
+                    cart = [];
+                    quantities = {};
+                    localStorage.removeItem('cart');
+                    localStorage.removeItem('quantities');
+                    
+                    // Reset discount
+                    discountApplied = false;
+                    discountInfo = null;
+                    selectedDiscountProducts = [];
+                    window.discountApplied = false;
+                    window.discountInfo = null;
+                    window.selectedDiscountProducts = [];
+                    
+                    // Update cart display
+                    updateCart();
+                    
+                    // Close receipt modal
+                    closeReceipt();
+                    
+                    // Show success message
+                    showNotification(`Order saved successfully! Order ID: #${data.order_id}`, 'success');
+                    
+                    // Reset discount button
+                    const discountBtn = document.getElementById('discount-btn');
+                    if (discountBtn) {
+                        discountBtn.innerHTML = '<i class="fas fa-percentage"></i> Add Discount';
+                        discountBtn.classList.remove('active');
+                        discountBtn.disabled = false;
+                        discountBtn.style.display = 'none';
+                    }
+                } else {
+                    showNotification('Error saving order: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error saving order. Please try again.', 'error');
+            })
+            .finally(() => {
+                // Reset button state
+                addOrderBtn.innerHTML = originalText;
+                addOrderBtn.disabled = false;
+            });
+        }
     </script>
 </body>
 </html>

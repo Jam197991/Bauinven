@@ -477,6 +477,18 @@ error_log("Number of orders found: " . $orders_result->num_rows);
                     echo '<p>' . $order['items'] . '</p>';
                     echo '</div>';
                     echo '<div class="order-total"><i class="fas fa-receipt"></i> Total: ₱' . number_format($order['total_amount'], 2) . '</div>';
+                    
+                    // Add discount information if available
+                    if ($order['discount_type'] && $order['discount_name']) {
+                        echo '<div class="discount-info" style="background: rgba(40, 167, 69, 0.1); padding: 0.5rem; border-radius: 6px; margin: 0.5rem 0; border-left: 3px solid #28a745;">';
+                        echo '<small style="color: #28a745; font-weight: 500;"><i class="fas fa-percentage"></i> ' . $order['discount_type'] . ' Discount</small><br>';
+                        echo '<small style="color: #666;">Customer: ' . $order['discount_name'] . '</small>';
+                        if ($order['discount_id']) {
+                            echo '<br><small style="color: #666;">ID: ' . $order['discount_id'] . '</small>';
+                        }
+                        echo '</div>';
+                    }
+                    
                     echo '<select class="status-select ' . $statusClass . '" onchange="updateOrderStatus(' . $order['order_id'] . ', this.value)">';
                     echo '<option value="pending" ' . ($order['status'] == 'pending' ? 'selected' : '') . '>⏳ Pending</option>';
                     echo '<option value="processing" ' . ($order['status'] == 'processing' ? 'selected' : '') . '>👨‍🍳 Processing</option>';
