@@ -2621,7 +2621,7 @@ $products_result = $conn->query($products_sql);
             window.discountInfo = discountInfo;
             window.selectedDiscountProducts = selectedDiscountProducts;
             
-            // Update cart display to show discount
+            // Update cart display to show discountv
             updateCartWithDiscount();
             
             // Close modal
@@ -2639,7 +2639,19 @@ $products_result = $conn->query($products_sql);
             
             if (discountApplied && discountInfo) {
                 const totalDiscountedItems = discountInfo.selectedProducts.reduce((sum, item) => sum + item.quantity, 0);
-                
+                const discountAmount = discountInfo.selectedProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.20;
+
+                // Build a breakdown of discounted items
+                let discountedItemsHtml = '';
+                discountInfo.selectedProducts.forEach(item => {
+                    discountedItemsHtml += `
+                        <div style="font-size:0.9rem; margin-left:1rem;">
+                            <span>${item.name} x${item.quantity}</span>
+                            <span style="color:#28a745;">-₱${(item.price * item.quantity * 0.20).toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+
                 // Add discount info to cart display
                 const discountInfoHtml = `
                     <div class="discount-info" style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary-color);">
@@ -2655,15 +2667,23 @@ $products_result = $conn->query($products_sql);
                         <p style="margin: 0.2rem 0; font-size: 0.9rem;">
                             <strong>Discounted Items:</strong> ${discountInfo.selectedProducts.length} products (${totalDiscountedItems} total items)
                         </p>
+                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
+                            <strong>Discount Amount:</strong> <span style="color:#28a745;">-₱${discountAmount.toFixed(2)}</span>
+                        </p>
+                        ${discountedItemsHtml}
                         <button onclick="removeDiscount()" style="background: #dc3545; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; margin-top: 0.5rem;">
                             <i class="fas fa-times"></i> Remove Discount
                         </button>
                     </div>
                 `;
                 
+                // Remove any existing discount info first
+                const oldDiscountInfo = cartItems.querySelector('.discount-info');
+                if (oldDiscountInfo) oldDiscountInfo.remove();
+
                 // Insert discount info at the beginning of cart items
                 cartItems.insertAdjacentHTML('afterbegin', discountInfoHtml);
-                
+
                 // Update discount button
                 if (discountBtn) {
                     discountBtn.innerHTML = '<i class="fas fa-check"></i> Discount Applied';
@@ -2790,12 +2810,6 @@ $products_result = $conn->query($products_sql);
                         <h4 style="margin: 0 0 0.5rem 0; color: #28a745;">
                             <i class="fas fa-percentage"></i> ${discountInfo.customerType} Discount Applied
                         </h4>
-                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
-                            <strong>Customer:</strong> ${discountInfo.customerName}
-                        </p>
-                        <p style="margin: 0.2rem 0; font-size: 0.9rem;">
-                            <strong>ID Number:</strong> ${discountInfo.customerId}
-                        </p>
                         <p style="margin: 0.2rem 0; font-size: 0.9rem;">
                             <strong>Discounted Items:</strong> ${discountInfo.selectedProducts.length} products (${totalDiscountedItems} total items)
                         </p>
