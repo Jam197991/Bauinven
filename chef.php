@@ -21,7 +21,7 @@ if ($conn->connect_error) {
 
 // Get orders with their items
 $orders_sql = "SELECT o.*, 
-               GROUP_CONCAT(CONCAT(p.product_name, ' (', oi.quantity, ')') SEPARATOR ', ') as items
+               GROUP_CONCAT(p.product_name SEPARATOR ', ') as items
                FROM orders o
                LEFT JOIN order_items oi ON o.order_id = oi.order_id
                LEFT JOIN products p ON oi.product_id = p.product_id

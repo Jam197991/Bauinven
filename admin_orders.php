@@ -33,20 +33,6 @@ try {
 } catch (Exception $e) {
     die("Database connection error: " . $e->getMessage());
 }
-
-// Get all orders with their items and discount information
-$orders_sql = "SELECT o.*, 
-                      GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.product_name, 
-                                        CASE WHEN oi.is_pwd_discounted = 1 THEN ' (Discounted)' ELSE '' END,
-                                        ' - ₱', 
-                                        CASE WHEN oi.is_pwd_discounted = 1 THEN oi.discounted_price ELSE oi.price END
-                                      ) SEPARATOR ', ') as items
-               FROM orders o
-               LEFT JOIN order_items oi ON o.order_id = oi.order_id
-               LEFT JOIN products p ON oi.product_id = p.product_id
-               GROUP BY o.order_id
-               ORDER BY o.order_date DESC";
-$orders_result = $conn->query($orders_sql);
 ?>
 
 <!DOCTYPE html>
@@ -232,7 +218,8 @@ $orders_result = $conn->query($orders_sql);
                     <th>Order ID</th>
                     <th>Date</th>
                     <th>Items</th>
-                    <th>Total Amount</th>
+                    <th>Original Total Amount</th>
+                    <th>Discounted Amount</th>
                     <th>Discount Info</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -240,10 +227,60 @@ $orders_result = $conn->query($orders_sql);
             </thead>
             <tbody>
                 <?php
+                // Fetch all orders
+                $orders_sql = "SELECT * FROM orders ORDER BY order_date DESC";
+                $orders_result = $conn->query($orders_sql);
                 if ($orders_result->num_rows > 0) {
                     while($order = $orders_result->fetch_assoc()) {
+                        $order_id = $order['order_id'];
                         $status_class = 'status-' . strtolower($order['status']);
-                        
+
+                        // Fetch order items for this order
+                        $items_sql = "SELECT oi.*, p.product_name FROM order_items oi JOIN products p ON oi.product_id = p.product_id WHERE oi.order_id = ? ORDER BY oi.item_id";
+                        $stmt = $conn->prepare($items_sql);
+                        $stmt->bind_param("i", $order_id);
+                        $stmt->execute();
+                        $items_result = $stmt->get_result();
+
+                        // Group items by product and discount status
+                        $item_groups = [];
+                        while ($item = $items_result->fetch_assoc()) {
+                            $name = $item['product_name'];
+                            $is_discounted = $item['is_pwd_discounted'] == 1;
+                            $price = $item['price'];
+                            $discounted_price = $item['discounted_price'];
+                            $key = $name . '|' . $is_discounted . '|' . ($is_discounted ? $discounted_price : $price);
+                            if (!isset($item_groups[$key])) {
+                                $item_groups[$key] = [
+                                    'name' => $name,
+                                    'is_discounted' => $is_discounted,
+                                    'price' => $price,
+                                    'discounted_price' => $discounted_price,
+                                    'count' => 0
+                                ];
+                            }
+                            $item_groups[$key]['count']++;
+                        }
+                        $items_display = [];
+                        $discounted_amount = 0;
+                        $fixed_price_amount = 0;
+                        foreach ($item_groups as $group) {
+                            $qty = $group['count'];
+                            $name = $group['name'];
+                            $is_discounted = $group['is_discounted'];
+                            $price = $group['price'];
+                            $discounted_price = $group['discounted_price'];
+                            if ($is_discounted) {
+                                $items_display[] = $qty . 'x ' . $name . ' <span style="color:#28a745;">(Discounted)</span> - ₱' . number_format($discounted_price, 2);
+                                $discounted_amount += $discounted_price * $qty;
+                            } else {
+                                $items_display[] = $qty . 'x ' . $name . ' - ₱' . number_format($price, 2);
+                                $fixed_price_amount += $price * $qty;
+                            }
+                        }
+                        $stmt->close();
+                        $items_html = implode('<br>', $items_display);
+
                         // Prepare discount info display
                         $discount_info = '';
                         if ($order['discount_type'] && $order['discount_name']) {
@@ -255,19 +292,21 @@ $orders_result = $conn->query($orders_sql);
                             }
                             $discount_info .= '</div>';
                         }
-                        
+
                         echo '<tr>';
                         echo '<td>#' . $order['order_id'] . '</td>';
                         echo '<td>' . date('M d, Y h:i A', strtotime($order['order_date'])) . '</td>';
-                        echo '<td>' . $order['items'] . '</td>';
+                        echo '<td>' . $items_html . '</td>';
                         echo '<td>₱' . number_format($order['total_amount'], 2) . '</td>';
+                        $final_amount = $discounted_amount + $fixed_price_amount;
+                        echo '<td style="color:#28a745;">₱' . number_format($final_amount, 2) . '</td>';
                         echo '<td>' . $discount_info . '</td>';
                         echo '<td><span class="status-badge ' . $status_class . '">' . ucfirst($order['status']) . '</span></td>';
                         echo '<td><a href="view_order_details.php?order_id=' . $order['order_id'] . '" class="view-details-btn">View Details</a></td>';
                         echo '</tr>';
                     }
                 } else {
-                    echo '<tr><td colspan="6" style="text-align: center;">No orders found</td></tr>';
+                    echo '<tr><td colspan="9" style="text-align: center;">No orders found</td></tr>';
                 }
                 ?>
             </tbody>

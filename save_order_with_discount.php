@@ -16,12 +16,22 @@ if (!$data || !isset($data['items']) || !isset($data['total'])) {
 }
 
 try {
+    // Aggregate requested quantities from the flattened items list
+    $requested_quantities = [];
+    foreach ($data['items'] as $item) {
+        $product_id = $item['id'];
+        if (!isset($requested_quantities[$product_id])) {
+            $requested_quantities[$product_id] = 0;
+        }
+        $requested_quantities[$product_id]++;
+    }
+
     // Check inventory availability before processing order
     $out_of_stock_items = [];
-    
-    foreach ($data['items'] as $item) {
+
+    foreach ($requested_quantities as $product_id => $quantity) {
         // Check current inventory for this product
-        $inventory_sql = "SELECT COALESCE(i.quantity, 0) as available_stock 
+        $inventory_sql = "SELECT p.product_name, COALESCE(i.quantity, 0) as available_stock 
                          FROM products p 
                          LEFT JOIN inventory i ON p.product_id = i.product_id 
                          WHERE p.product_id = ?";
@@ -30,35 +40,32 @@ try {
             throw new Exception("Error preparing inventory check: " . $conn->error);
         }
         
-        $stmt->bind_param("i", $item['id']);
+        $stmt->bind_param("i", $product_id);
         if (!$stmt->execute()) {
             throw new Exception("Error checking inventory: " . $stmt->error);
         }
         
         $result = $stmt->get_result();
         $inventory_data = $result->fetch_assoc();
+        
+        if (!$inventory_data) {
+            // This case should ideally not happen if data comes from a valid source
+            continue;
+        }
+
+        $product_name = $inventory_data['product_name'];
         $available_stock = $inventory_data['available_stock'];
         
         // Check if requested quantity exceeds available stock
-        if ($item['quantity'] > $available_stock) {
-            // Get product name for error message
-            $product_sql = "SELECT product_name FROM products WHERE product_id = ?";
-            $product_stmt = $conn->prepare($product_sql);
-            $product_stmt->bind_param("i", $item['id']);
-            $product_stmt->execute();
-            $product_result = $product_stmt->get_result();
-            $product_data = $product_result->fetch_assoc();
-            $product_name = $product_data['product_name'];
-            
+        if ($quantity > $available_stock) {
             $out_of_stock_items[] = [
                 'name' => $product_name,
-                'requested' => $item['quantity'],
+                'requested' => $quantity,
                 'available' => $available_stock
             ];
         }
         
         $stmt->close();
-        if (isset($product_stmt)) $product_stmt->close();
     }
     
     // If there are out-of-stock items, return error
@@ -96,46 +103,30 @@ try {
     $order_id = $conn->insert_id;
 
     // Insert order items and update inventory
-    $item_sql = "INSERT INTO order_items (order_id, product_id, quantity, price, is_pwd_discounted, discounted_price) 
-                 VALUES (?, ?, ?, ?, ?, ?)";
+    $item_sql = "INSERT INTO order_items (order_id, product_id, price, is_pwd_discounted, discounted_price) VALUES (?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($item_sql);
     if (!$stmt) {
         throw new Exception("Error preparing items statement: " . $conn->error);
     }
 
     foreach ($data['items'] as $item) {
-        // Check if this item has discount applied
-        $is_discounted = false;
-        $discounted_price = $item['price'];
-        
-        // Find if this product is in the discounted products list
-        foreach ($discounted_products as $discounted_item) {
-            if ($discounted_item['id'] == $item['id']) {
-                $is_discounted = true;
-                // Calculate discounted price (20% discount)
-                $discounted_price = $item['price'] * 0.80; // 20% off
-                break;
-            }
-        }
-        
-        // Insert order item with discount information
-        $stmt->bind_param("iiiddd", $order_id, $item['id'], $item['quantity'], $item['price'], $is_discounted, $discounted_price);
+        $is_discounted = isset($item['is_pwd_discounted']) ? (int)$item['is_pwd_discounted'] : 0;
+        $discounted_price = isset($item['discounted_price']) && $item['discounted_price'] !== null ? $item['discounted_price'] : $item['price'];
+        // Insert order item (one per row)
+        $stmt->bind_param("iidid", $order_id, $item['id'], $item['price'], $is_discounted, $discounted_price);
         if (!$stmt->execute()) {
             throw new Exception("Error inserting order item: " . $stmt->error);
         }
-        
-        // Update inventory (reduce stock)
-        $update_inventory_sql = "UPDATE inventory SET quantity = quantity - ?, updated_at = NOW() WHERE product_id = ?";
+        // Update inventory (reduce stock by 1 for each item)
+        $update_inventory_sql = "UPDATE inventory SET quantity = quantity - 1, updated_at = NOW() WHERE product_id = ?";
         $update_stmt = $conn->prepare($update_inventory_sql);
         if (!$update_stmt) {
             throw new Exception("Error preparing inventory update: " . $conn->error);
         }
-        
-        $update_stmt->bind_param("ii", $item['quantity'], $item['id']);
+        $update_stmt->bind_param("i", $item['id']);
         if (!$update_stmt->execute()) {
             throw new Exception("Error updating inventory: " . $update_stmt->error);
         }
-        
         $update_stmt->close();
     }
 

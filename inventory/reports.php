@@ -31,18 +31,21 @@ $stock_query = "SELECT p.product_name, i.quantity,
                 ORDER BY i.quantity ASC";
 $stock_result = mysqli_query($conn, $stock_query);
 
-// Purchase Order Report - Removed order_type filter since table doesn't have this column
-$purchase_query = "SELECT o.order_id, o.order_date, o.total_amount, o.status,
-                   COUNT(oi.item_id) as total_items
-                   FROM orders o 
-                   LEFT JOIN order_items oi ON o.order_id = oi.order_id
-                   WHERE o.order_date BETWEEN '$start_date' AND '$end_date'
-                   GROUP BY o.order_id
-                   ORDER BY o.order_date DESC";
+// Purchase Order Report - Changed to reflect purchases from stock_movements
+$purchase_query = "SELECT s.supplier_name, 
+                   COUNT(sm.movement_id) as total_transactions,
+                   SUM(sm.total_amount) as total_spent,
+                   sm.movement_type as purchase_type
+                   FROM stock_movements sm
+                   JOIN suppliers s ON sm.supplier_id = s.supplier_id
+                   WHERE sm.movement_type = 'purchase' AND sm.movement_date BETWEEN '$start_date' AND '$end_date'
+                   GROUP BY s.supplier_name, sm.movement_type
+                   ORDER BY total_spent DESC";
 $purchase_result = mysqli_query($conn, $purchase_query);
 
-// Sales Order Report - Removed order_type filter since table doesn't have this column
+// Sales Order Report - Updated to sum item prices for total amount
 $sales_query = "SELECT o.order_id, o.order_date, o.total_amount, o.status,
+                SUM(CASE WHEN oi.is_pwd_discounted = 1 THEN oi.discounted_price ELSE oi.price END) as calculated_total,
                 COUNT(oi.item_id) as total_items
                 FROM orders o 
                 LEFT JOIN order_items oi ON o.order_id = oi.order_id
@@ -51,23 +54,24 @@ $sales_query = "SELECT o.order_id, o.order_date, o.total_amount, o.status,
                 ORDER BY o.order_date DESC";
 $sales_result = mysqli_query($conn, $sales_query);
 
-// Sales Summary Report - Removed order_type filter since table doesn't have this column
+// Sales Summary Report - Updated to use calculated total from order_items
 $sales_summary_query = "SELECT 
                         DATE(o.order_date) as sale_date,
                         COUNT(DISTINCT o.order_id) as total_orders,
-                        SUM(o.total_amount) as total_sales,
-                        AVG(o.total_amount) as avg_order_value
-                        FROM orders o 
+                        SUM(CASE WHEN oi.is_pwd_discounted = 1 THEN oi.discounted_price ELSE oi.price END) as total_sales,
+                        SUM(CASE WHEN oi.is_pwd_discounted = 1 THEN oi.discounted_price ELSE oi.price END) / COUNT(DISTINCT o.order_id) as avg_order_value
+                        FROM orders o
+                        JOIN order_items oi ON o.order_id = oi.order_id
                         WHERE o.order_date BETWEEN '$start_date' AND '$end_date'
                         GROUP BY DATE(o.order_date)
                         ORDER BY sale_date DESC";
 $sales_summary_result = mysqli_query($conn, $sales_summary_query);
 
-// Top Selling Products Report - Removed order_type filter since table doesn't have this column
+// Top Selling Products Report - Updated to use calculated price from order_items
 $top_products_query = "SELECT p.product_name, 
-                       SUM(oi.quantity) as total_sold,
-                       SUM(oi.quantity * oi.price) as total_revenue,
-                       AVG(oi.price) as avg_price
+                       COUNT(oi.product_id) as total_sold,
+                       SUM(CASE WHEN oi.is_pwd_discounted = 1 THEN oi.discounted_price ELSE oi.price END) as total_revenue,
+                       AVG(CASE WHEN oi.is_pwd_discounted = 1 THEN oi.discounted_price ELSE oi.price END) as avg_price
                        FROM order_items oi 
                        JOIN products p ON oi.product_id = p.product_id
                        JOIN orders o ON oi.order_id = o.order_id
@@ -113,12 +117,12 @@ mysqli_data_seek($stock_result, 0);
 
 // Calculate totals
 while($row = mysqli_fetch_assoc($sales_result)) {
-    $total_sales_amount += $row['total_amount'];
+    $total_sales_amount += $row['calculated_total'] ?? $row['total_amount'];
 }
 mysqli_data_seek($sales_result, 0);
 
 while($row = mysqli_fetch_assoc($purchase_result)) {
-    $total_purchase_amount += $row['total_amount'];
+    $total_purchase_amount += $row['total_spent'];
 }
 mysqli_data_seek($purchase_result, 0);
 
@@ -174,7 +178,7 @@ while($row = mysqli_fetch_assoc($stock_distribution_result)) {
 
 // Top products by revenue
 $top_products_chart_query = "SELECT p.product_name, 
-                             SUM(oi.quantity * oi.price) as total_revenue
+                             SUM(oi.price) as total_revenue
                              FROM order_items oi 
                              JOIN products p ON oi.product_id = p.product_id
                              JOIN orders o ON oi.order_id = o.order_id
@@ -663,23 +667,21 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                         <table id="purchase-table">
                             <thead>
                                 <tr>
-                                    <th>Order ID</th>
-                                    <th>Date</th>
-                                    <th>Total Amount</th>
-                                    <th>Items</th>
-                                    <th>Status</th>
+                                    <th>Supplier</th>
+                                    <th>Total Spent</th>
+                                    <th>Transactions</th>
+                                    <th>Type</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php while($row = mysqli_fetch_assoc($purchase_result)) { ?>
                                 <tr>
-                                    <td><?php echo $row['order_id']; ?></td>
-                                    <td><?php echo date('M d, Y', strtotime($row['order_date'])); ?></td>
-                                    <td>₱<?php echo number_format($row['total_amount'], 2); ?></td>
-                                    <td><?php echo $row['total_items']; ?></td>
+                                    <td><?php echo htmlspecialchars($row['supplier_name']); ?></td>
+                                    <td>₱<?php echo number_format($row['total_spent'], 2); ?></td>
+                                    <td><?php echo $row['total_transactions']; ?></td>
                                     <td>
-                                        <span class="status-badge status-<?php echo strtolower($row['status']); ?>">
-                                            <?php echo ucfirst($row['status']); ?>
+                                        <span class="status-badge status-completed">
+                                            <?php echo ucfirst($row['purchase_type']); ?>
                                         </span>
                                     </td>
                                 </tr>
@@ -715,7 +717,7 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                                 <tr>
                                     <td><?php echo $row['order_id']; ?></td>
                                     <td><?php echo date('M d, Y', strtotime($row['order_date'])); ?></td>
-                                    <td>₱<?php echo number_format($row['total_amount'], 2); ?></td>
+                                    <td>₱<?php echo number_format($row['calculated_total'] ?? $row['total_amount'], 2); ?></td>
                                     <td><?php echo $row['total_items']; ?></td>
                                     <td>
                                         <span class="status-badge status-<?php echo strtolower($row['status']); ?>">

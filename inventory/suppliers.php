@@ -95,16 +95,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if ($check_result->num_rows > 0) {
                 // Product exists in inventory, update quantity
-                $current_quantity = $check_result->fetch_assoc()['quantity'];
+                $row = $check_result->fetch_assoc();
+                $current_quantity = $row['quantity'];
                 
                 if ($movement_type == 'Stock-in') {
                     $new_quantity = $current_quantity + $quantity;
-                } else { // Stock-out
-                    $new_quantity = $current_quantity - $quantity;
-                    // Prevent negative inventory
-                    if ($new_quantity < 0) {
+                } elseif ($movement_type == 'Stock-out') {
+                    if ($current_quantity < $quantity) {
                         throw new Exception("Insufficient stock! Current stock: $current_quantity, trying to remove: $quantity");
                     }
+                    $new_quantity = $current_quantity - $quantity;
+                } else {
+                    // Should not happen with the current form, but good practice to handle
+                    $new_quantity = $current_quantity;
                 }
                 
                 $update_sql = "UPDATE inventory SET quantity = ?, updated_at = NOW() WHERE product_id = ?";

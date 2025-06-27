@@ -2604,11 +2604,18 @@ $products_result = $conn->query($products_sql);
                 return;
             }
             
+            // Calculate discount amount
+            const discountAmount = selectedDiscountProducts.reduce((total, item) => total + (item.price * item.quantity), 0) * 0.20;
+            if (discountAmount === 0) {
+                showNotification('Please enter a discount quantity greater than 0 for at least one product!', 'error');
+                return;
+            }
+            
             // Store discount information
             discountInfo = {
                 customerType: customerType,
                 customerName: customerName,
-                customerId: customerId,
+                customerId: customerId, 
                 selectedProducts: selectedDiscountProducts,
                 discountRate: 0.20,
                 appliedAt: new Date()
@@ -2620,15 +2627,14 @@ $products_result = $conn->query($products_sql);
             window.discountApplied = discountApplied;
             window.discountInfo = discountInfo;
             window.selectedDiscountProducts = selectedDiscountProducts;
-            
+         
             // Update cart display to show discountv
             updateCartWithDiscount();
             
             // Close modal
             closeDiscountModal();
             
-            // Show success notification
-            const discountAmount = selectedDiscountProducts.reduce((total, item) => total + (item.price * item.quantity), 0) * 0.20;
+            // Show success notification 
             showNotification(`Discount applied! Saved ₱${discountAmount.toFixed(2)} for ${customerType} customer.`, 'success');
         }
 
@@ -2853,13 +2859,39 @@ $products_result = $conn->query($products_sql);
             }
 
             // Prepare order data
+            let items = [];
+            // Flatten cart: one object per item, not per group
+            cart.forEach(item => {
+                // Check if this item is discounted and how many are discounted
+                let discountedQty = 0;
+                if (discountApplied && discountInfo && discountInfo.selectedProducts) {
+                    const disc = discountInfo.selectedProducts.find(d => d.id === item.id);
+                    if (disc) discountedQty = disc.quantity;
+                }
+                // Add discounted items
+                for (let i = 0; i < discountedQty; i++) {
+                    items.push({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        is_pwd_discounted: true,
+                        discounted_price: (item.price * 0.8)
+                    });
+                }
+                // Add non-discounted items
+                for (let i = 0; i < item.quantity - discountedQty; i++) {
+                    items.push({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        is_pwd_discounted: false,
+                        discounted_price: item.price
+                    });
+                }
+            });
+
             const orderData = {
-                items: cart.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity
-                })),
+                items: items,
                 total: parseFloat(document.getElementById('total-amount').textContent.replace('₱', '')),
                 discount_info: discountApplied && discountInfo ? {
                     customerType: discountInfo.customerType,
