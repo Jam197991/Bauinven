@@ -199,6 +199,17 @@ $items_result = $stmt->get_result();
             margin-left: 0.5rem;
         }
 
+        .cancel-item-btn {
+            color: #dc3545;
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .cancel-item-btn:hover {
+            color: #a71d2a;
+        }
+
         .order-summary {
             background: var(--background-color);
             padding: 1.5rem;
@@ -289,9 +300,9 @@ $items_result = $stmt->get_result();
             <thead>
                 <tr>
                     <th>Product</th>
-                    <th>Quantity</th>
                     <th>Price</th>
                     <th>Subtotal</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -302,8 +313,8 @@ $items_result = $stmt->get_result();
                 while ($item = $items_result->fetch_assoc()) {
                     $is_discounted = $item['is_pwd_discounted'] == 1;
                     $display_price = $is_discounted ? $item['discounted_price'] : $item['price'];
-                    $subtotal = $display_price * $item['quantity'];
-                    $total_items += $item['quantity'];
+                    $subtotal = $display_price;
+                    $total_items++;
                     $total_amount += $subtotal;
                     
                     $row_class = $is_discounted ? 'discounted-item' : '';
@@ -315,7 +326,6 @@ $items_result = $stmt->get_result();
                                 <span class="discount-badge">Discounted</span>
                             <?php endif; ?>
                         </td>
-                        <td><?php echo $item['quantity']; ?></td>
                         <td>
                             <div class="price-info">
                                 <?php if ($is_discounted): ?>
@@ -328,6 +338,11 @@ $items_result = $stmt->get_result();
                         </td>
                         <td>
                             <strong>₱<?php echo number_format($subtotal, 2); ?></strong>
+                        </td>
+                        <td>
+                            <a href="#" class="cancel-item-btn" title="Cancel Item" data-item-id="<?php echo $item['item_id']; ?>">
+                                <i class="fas fa-times-circle"></i>
+                            </a>
                         </td>
                     </tr>
                     <?php
@@ -347,5 +362,41 @@ $items_result = $stmt->get_result();
             </div>
         </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.cancel-item-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const itemId = this.dataset.itemId;
+                const orderId = <?php echo $order_id; ?>;
+
+                if (confirm('Are you sure you want to cancel this item? This action cannot be undone.')) {
+                    fetch('cancel_order_item.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ item_id: itemId, order_id: orderId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Item cancelled successfully.');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An unexpected error occurred. Please try again.');
+                    });
+                }
+            });
+        });
+    });
+    </script>
 </body>
 </html> 

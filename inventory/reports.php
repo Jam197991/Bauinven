@@ -589,33 +589,6 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
             </div>
         </div>
 
-        <!-- Analytical Charts -->
-        <div class="charts-grid">
-            <!-- Sales Trend Chart -->
-            <div class="chart-container">
-                <h3 class="chart-title">Sales Trend (Last 7 Days)</h3>
-                <canvas id="salesTrendChart" width="250" height="120"></canvas>
-            </div>
-
-            <!-- Stock Level Distribution Chart -->
-            <div class="chart-container">
-                <h3 class="chart-title">Stock Level Distribution</h3>
-                <canvas id="stockDistributionChart" width="250" height="120"></canvas>
-            </div>
-
-            <!-- Top Products Revenue Chart -->
-            <div class="chart-container">
-                <h3 class="chart-title">Top Products by Revenue</h3>
-                <canvas id="topProductsChart" width="250" height="120"></canvas>
-            </div>
-
-            <!-- Monthly Sales Comparison Chart -->
-            <div class="chart-container">
-                <h3 class="chart-title">Monthly Sales Comparison</h3>
-                <canvas id="monthlySalesChart" width="250" height="120"></canvas>
-            </div>
-        </div>
-
         <!-- Reports Grid -->
         <div class="reports-grid">
             <!-- Stock Level Report -->
@@ -654,193 +627,52 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                 </div>
             </div>
 
-            <!-- Purchase Order Report -->
-            <div class="report-card">
-                <div class="report-header">
-                    <i class="fas fa-shopping-cart"></i> Purchase Order Report
-                    <button class="export-btn" onclick="exportTable('purchase-table', 'Purchase_Order_Report')">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
-                <div class="report-content">
-                    <div class="table-container">
-                        <table id="purchase-table">
-                            <thead>
-                                <tr>
-                                    <th>Supplier</th>
-                                    <th>Total Spent</th>
-                                    <th>Transactions</th>
-                                    <th>Type</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while($row = mysqli_fetch_assoc($purchase_result)) { ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($row['supplier_name']); ?></td>
-                                    <td>₱<?php echo number_format($row['total_spent'], 2); ?></td>
-                                    <td><?php echo $row['total_transactions']; ?></td>
-                                    <td>
-                                        <span class="status-badge status-completed">
-                                            <?php echo ucfirst($row['purchase_type']); ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                                <?php } ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
             <!-- Sales Order Report -->
             <div class="report-card">
                 <div class="report-header">
                     <i class="fas fa-chart-line"></i> Sales Order Report
-                    <button class="export-btn" onclick="exportTable('sales-table', 'Sales_Order_Report')">
+                    <button class="export-btn" onclick="exportTable('sales-order-table', 'Sales_Order_Report')">
                         <i class="fas fa-download"></i> Export
                     </button>
                 </div>
                 <div class="report-content">
                     <div class="table-container">
-                        <table id="sales-table">
+                        <table id="sales-order-table">
                             <thead>
                                 <tr>
                                     <th>Order ID</th>
                                     <th>Date</th>
                                     <th>Total Amount</th>
-                                    <th>Items</th>
+                                    <th>Discount Type</th>
+                                    <th>Discount Name</th>
+                                    <th>Discount ID</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while($row = mysqli_fetch_assoc($sales_result)) { ?>
+                                <?php
+                                $sales_order_query = "SELECT o.order_id, o.order_date, o.discount_type, o.discount_name, o.discount_id, o.status,
+                                    SUM(CASE WHEN oi.discounted_price IS NOT NULL THEN oi.discounted_price ELSE oi.price END) AS total_amount
+                                    FROM orders o
+                                    LEFT JOIN order_items oi ON o.order_id = oi.order_id
+                                    WHERE o.order_date BETWEEN '$start_date' AND '$end_date'
+                                    GROUP BY o.order_id
+                                    ORDER BY o.order_date DESC";
+                                $sales_order_result = mysqli_query($conn, $sales_order_query);
+                                while($row = mysqli_fetch_assoc($sales_order_result)) { ?>
                                 <tr>
                                     <td><?php echo $row['order_id']; ?></td>
                                     <td><?php echo date('M d, Y', strtotime($row['order_date'])); ?></td>
-                                    <td>₱<?php echo number_format($row['calculated_total'] ?? $row['total_amount'], 2); ?></td>
-                                    <td><?php echo $row['total_items']; ?></td>
-                                    <td>
-                                        <span class="status-badge status-<?php echo strtolower($row['status']); ?>">
-                                            <?php echo ucfirst($row['status']); ?>
-                                        </span>
-                                    </td>
+                                    <td>₱<?php echo number_format($row['total_amount'], 2); ?></td>
+                                    <td><?php echo htmlspecialchars($row['discount_type'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['discount_name'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($row['discount_id'] ?? ''); ?></td>
+                                    <td><span class="status-badge status-<?php echo strtolower($row['status']); ?>"><?php echo ucfirst($row['status']); ?></span></td>
                                 </tr>
                                 <?php } ?>
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
-
-            <!-- Top Selling Products Report -->
-            <div class="report-card">
-                <div class="report-header">
-                    <i class="fas fa-star"></i> Top Selling Products Report
-                    <button class="export-btn" onclick="exportTable('top-products-table', 'Top_Selling_Products_Report')">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
-                <div class="report-content">
-                    <div class="table-container">
-                        <table id="top-products-table">
-                            <thead>
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th>Total Sold</th>
-                                    <th>Total Revenue</th>
-                                    <th>Avg Price</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while($row = mysqli_fetch_assoc($top_products_result)) { ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                                    <td><?php echo $row['total_sold']; ?></td>
-                                    <td>₱<?php echo number_format($row['total_revenue'], 2); ?></td>
-                                    <td>₱<?php echo number_format($row['avg_price'], 2); ?></td>
-                                </tr>
-                                <?php } ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sales Summary Report -->
-        <div class="report-card">
-            <div class="report-header">
-                <i class="fas fa-chart-bar"></i> Sales Summary Report
-                <button class="export-btn" onclick="exportTable('sales-summary-table', 'Sales_Summary_Report')">
-                    <i class="fas fa-download"></i> Export
-                </button>
-            </div>
-            <div class="report-content">
-                <div class="table-container">
-                    <table id="sales-summary-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Total Orders</th>
-                                <th>Total Sales</th>
-                                <th>Average Order Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while($row = mysqli_fetch_assoc($sales_summary_result)) { ?>
-                            <tr>
-                                <td><?php echo date('M d, Y', strtotime($row['sale_date'])); ?></td>
-                                <td><?php echo $row['total_orders']; ?></td>
-                                <td>₱<?php echo number_format($row['total_sales'], 2); ?></td>
-                                <td>₱<?php echo number_format($row['avg_order_value'], 2); ?></td>
-                            </tr>
-                            <?php } ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Purchase History Report -->
-        <div class="report-card">
-            <div class="report-header">
-                <i class="fas fa-history"></i> Purchase History Report
-                <button class="export-btn" onclick="exportTable('purchase-history-table', 'Purchase_History_Report')">
-                    <i class="fas fa-download"></i> Export
-                </button>
-            </div>
-            <div class="report-content">
-                <div class="table-container">
-                    <table id="purchase-history-table">
-                        <thead>
-                            <tr>
-                                <th>Movement ID</th>
-                                <th>Product</th>
-                                <th>Type</th>
-                                <th>Quantity</th>
-                                <th>Unit Price</th>
-                                <th>Total Amount</th>
-                                <th>Supplier</th>
-                                <th>Date</th>
-                                <th>Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while($row = mysqli_fetch_assoc($purchase_history_result)) { ?>
-                            <tr>
-                                <td><?php echo $row['movement_id']; ?></td>
-                                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                                <td><?php echo ucfirst($row['movement_type']); ?></td>
-                                <td><?php echo $row['quantity']; ?></td>
-                                <td>₱<?php echo number_format($row['unit_price'], 2); ?></td>
-                                <td>₱<?php echo number_format($row['total_amount'], 2); ?></td>
-                                <td><?php echo htmlspecialchars($row['supplier_name'] ?? 'N/A'); ?></td>
-                                <td><?php echo date('M d, Y', strtotime($row['movement_date'])); ?></td>
-                                <td><?php echo htmlspecialchars($row['notes'] ?? ''); ?></td>
-                            </tr>
-                            <?php } ?>
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
@@ -875,243 +707,7 @@ while($row = mysqli_fetch_assoc($monthly_sales_result)) {
                     });
                 });
             });
-
-            // Initialize Charts
-            initializeCharts();
         });
-
-        // Initialize all charts
-        function initializeCharts() {
-            // Sales Trend Chart
-            const salesTrendCtx = document.getElementById('salesTrendChart').getContext('2d');
-            new Chart(salesTrendCtx, {
-                type: 'line',
-                data: {
-                    labels: <?php echo json_encode($sales_dates); ?>,
-                    datasets: [{
-                        label: 'Sales Amount (₱)',
-                        data: <?php echo json_encode($sales_amounts); ?>,
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 1,
-                        fill: true,
-                        tension: 0.4    
-                    }, {
-                        label: 'Number of Orders',
-                        data: <?php echo json_encode($sales_orders); ?>,
-                        borderColor: '#e74c3c',
-                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                        borderWidth: 1,
-                        fill: false,
-                        tension: 0.4,
-                        yAxisID: 'y1'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    size: 10
-                                },
-                                padding: 5
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                font: {
-                                    size: 9
-                                }
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                font: {
-                                    size: 9
-                                }
-                            },
-                            title: {
-                                display: false
-                            }
-                        },
-                        y1: {
-                            position: 'right',
-                            beginAtZero: true,
-                            ticks: {
-                                font: {
-                                    size: 9
-                                }
-                            },
-                            title: {
-                                display: false
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
-                    }
-                }
-            });
-
-            // Stock Level Distribution Chart
-            const stockDistributionCtx = document.getElementById('stockDistributionChart').getContext('2d');
-            new Chart(stockDistributionCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: <?php echo json_encode($stock_labels); ?>,
-                    datasets: [{
-                        data: <?php echo json_encode($stock_counts); ?>,
-                        backgroundColor: <?php echo json_encode($stock_colors); ?>,
-                        borderWidth: 1,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 9
-                                },
-                                padding: 3
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Top Products Revenue Chart
-            const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
-            new Chart(topProductsCtx, {
-                type: 'bar',
-                data: {
-                    labels: <?php echo json_encode($product_names); ?>,
-                    datasets: [{
-                        label: 'Revenue (₱)',
-                        data: <?php echo json_encode($product_revenues); ?>,
-                        backgroundColor: 'rgba(52, 152, 219, 0.8)',
-                        borderColor: '#3498db',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                font: {
-                                    size: 8
-                                },
-                                maxRotation: 45
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                font: {
-                                    size: 9
-                                }
-                            },
-                            title: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Monthly Sales Comparison Chart
-            const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
-            new Chart(monthlySalesCtx, {
-                type: 'bar',
-                data: {
-                    labels: <?php echo json_encode($monthly_labels); ?>,
-                    datasets: [{
-                        label: 'Sales Amount (₱)',
-                        data: <?php echo json_encode($monthly_sales); ?>,
-                        backgroundColor: 'rgba(46, 204, 113, 0.8)',
-                        borderColor: '#2ecc71',
-                        borderWidth: 1,
-                        yAxisID: 'y'
-                    }, {
-                        label: 'Number of Orders',
-                        data: <?php echo json_encode($monthly_orders); ?>,
-                        backgroundColor: 'rgba(155, 89, 182, 0.8)',
-                        borderColor: '#9b59b6',
-                        borderWidth: 1,
-                        yAxisID: 'y1'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    size: 10
-                                },
-                                padding: 5
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                font: {
-                                    size: 9
-                                }
-                            }
-                        },
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            ticks: {
-                                font: {
-                                    size: 9
-                                }
-                            },
-                            title: {
-                                display: false
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            ticks: {
-                                font: {
-                                    size: 9
-                                }
-                            },
-                            title: {
-                                display: false
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
-                    }
-                }
-            });
-        }
     </script>
 </body>
 </html>

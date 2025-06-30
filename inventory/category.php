@@ -91,6 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $_SESSION['error'] = 'Error adding category: ' . $stmt->error;
         }
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
     }
     
     if (isset($_POST['delete_category'])) {
@@ -114,6 +116,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if($stmt->execute()) {
             $_SESSION['success'] = 'Category deleted successfully!';
         }
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
     }
     
     if (isset($_POST['update_category'])) {
@@ -186,6 +190,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if($stmt->execute()) {
             $_SESSION['success'] = 'Category updated successfully!';
         }
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
     }
 }
 

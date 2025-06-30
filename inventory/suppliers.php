@@ -137,6 +137,139 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             echo "<script>localStorage.setItem('error', 'Error adding stock movement: " . addslashes($e->getMessage()) . "');</script>";
         }
     }
+
+    // Update stock movement
+    if (isset($_POST['update_stock_movement'])) {
+        $movement_id = $_POST['movement_id'];
+        $product_id = $_POST['product_id'];
+        $new_movement_type = $_POST['movement_type'];
+        $new_quantity = (int)$_POST['quantity'];
+        $new_unit_price = $_POST['unit_price'];
+        $new_supplier_id = $_POST['supplier_id'];
+        $new_notes = $_POST['notes'];
+        $new_total_amount = $new_quantity * $new_unit_price;
+
+        $conn->begin_transaction();
+        try {
+            // Get original movement to calculate inventory change
+            $get_sql = "SELECT product_id, movement_type, quantity FROM stock_movements WHERE movement_id = ?";
+            $get_stmt = $conn->prepare($get_sql);
+            $get_stmt->bind_param("i", $movement_id);
+            $get_stmt->execute();
+            $original_movement = $get_stmt->get_result()->fetch_assoc();
+
+            if (!$original_movement) {
+                throw new Exception("Stock movement not found!");
+            }
+
+            $original_quantity = (int)$original_movement['quantity'];
+            $original_movement_type = $original_movement['movement_type'];
+
+            // Get current inventory
+            $inv_sql = "SELECT quantity FROM inventory WHERE product_id = ?";
+            $inv_stmt = $conn->prepare($inv_sql);
+            $inv_stmt->bind_param("i", $product_id);
+            $inv_stmt->execute();
+            $current_inventory = (int)$inv_stmt->get_result()->fetch_assoc()['quantity'];
+
+            // Calculate inventory change
+            $inventory_change = 0;
+            if ($original_movement_type == 'Stock-in') {
+                $inventory_change -= $original_quantity;
+            } else {
+                $inventory_change += $original_quantity;
+            }
+
+            if ($new_movement_type == 'Stock-in') {
+                $inventory_change += $new_quantity;
+            } else {
+                $inventory_change -= $new_quantity;
+            }
+
+            $final_inventory = $current_inventory + $inventory_change;
+
+            if ($final_inventory < 0) {
+                throw new Exception("Update would result in negative inventory. Operation cancelled.");
+            }
+
+            // Update inventory
+            $update_inv_sql = "UPDATE inventory SET quantity = ? WHERE product_id = ?";
+            $update_inv_stmt = $conn->prepare($update_inv_sql);
+            $update_inv_stmt->bind_param("ii", $final_inventory, $product_id);
+            $update_inv_stmt->execute();
+
+            // Update stock movement
+            $update_move_sql = "UPDATE stock_movements SET movement_type = ?, quantity = ?, unit_price = ?, total_amount = ?, supplier_id = ?, notes = ? WHERE movement_id = ?";
+            $update_move_stmt = $conn->prepare($update_move_sql);
+            $update_move_stmt->bind_param("siddisi", $new_movement_type, $new_quantity, $new_unit_price, $new_total_amount, $new_supplier_id, $new_notes, $movement_id);
+            $update_move_stmt->execute();
+
+            $conn->commit();
+            echo "<script>localStorage.setItem('message', 'Stock movement updated successfully!'); window.location.href = window.location.pathname;</script>";
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo "<script>localStorage.setItem('error', 'Error updating stock movement: " . addslashes($e->getMessage()) . "');</script>";
+        }
+    }
+
+    // Delete stock movement
+    if (isset($_POST['delete_stock_movement'])) {
+        $movement_id = $_POST['movement_id'];
+
+        $conn->begin_transaction();
+        try {
+            // Get movement details before deleting to reverse inventory change
+            $get_sql = "SELECT product_id, movement_type, quantity FROM stock_movements WHERE movement_id = ?";
+            $get_stmt = $conn->prepare($get_sql);
+            $get_stmt->bind_param("i", $movement_id);
+            $get_stmt->execute();
+            $movement_to_delete = $get_stmt->get_result()->fetch_assoc();
+
+            if (!$movement_to_delete) {
+                throw new Exception("Stock movement not found!");
+            }
+
+            $product_id = $movement_to_delete['product_id'];
+            $quantity_to_reverse = $movement_to_delete['quantity'];
+            $movement_type = $movement_to_delete['movement_type'];
+
+            // Delete the movement
+            $delete_sql = "DELETE FROM stock_movements WHERE movement_id = ?";
+            $delete_stmt = $conn->prepare($delete_sql);
+            $delete_stmt->bind_param("i", $movement_id);
+            $delete_stmt->execute();
+
+            // Get current inventory
+            $inv_sql = "SELECT quantity FROM inventory WHERE product_id = ?";
+            $inv_stmt = $conn->prepare($inv_sql);
+            $inv_stmt->bind_param("i", $product_id);
+            $inv_stmt->execute();
+            $current_inventory = (int)$inv_stmt->get_result()->fetch_assoc()['quantity'];
+            
+            $new_inventory = $current_inventory;
+            if ($movement_type == 'Stock-in') {
+                $new_inventory -= $quantity_to_reverse;
+            } else { // Stock-out
+                $new_inventory += $quantity_to_reverse;
+            }
+
+            if ($new_inventory < 0) {
+                throw new Exception("Reversal would result in negative inventory. Please check product stock.");
+            }
+
+            // Update inventory
+            $update_inv_sql = "UPDATE inventory SET quantity = ? WHERE product_id = ?";
+            $update_inv_stmt = $conn->prepare($update_inv_sql);
+            $update_inv_stmt->bind_param("ii", $new_inventory, $product_id);
+            $update_inv_stmt->execute();
+
+            $conn->commit();
+            echo "<script>localStorage.setItem('message', 'Stock movement deleted successfully!'); window.location.href = window.location.pathname;</script>";
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo "<script>localStorage.setItem('error', 'Error deleting stock movement: " . addslashes($e->getMessage()) . "');</script>";
+        }
+    }
 }
 
 // Fetch all suppliers
@@ -334,7 +467,7 @@ $products_json = json_encode($products_array);
                     </div>
                 </div>
             </div>
-
+            <br>
             <!-- Stock Movements Section -->
             <div class="row mb-4">
                 <div class="col">
@@ -356,6 +489,7 @@ $products_json = json_encode($products_array);
                                     <th>Supplier</th>
                                     <th>Movement Date</th>
                                     <th>Notes</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -373,7 +507,87 @@ $products_json = json_encode($products_array);
                                     <td><?php echo $movement['supplier_name']; ?></td>
                                     <td><?php echo date('M d, Y H:i', strtotime($movement['movement_date'])); ?></td>
                                     <td><?php echo $movement['notes']; ?></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button type="button" class="btn btn-sm btn-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editStockMovementModal<?php echo $movement['movement_id']; ?>">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this stock movement? This will affect inventory levels.');">
+                                                <input type="hidden" name="movement_id" value="<?php echo $movement['movement_id']; ?>">
+                                                <button type="submit" name="delete_stock_movement" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
+
+                                <!-- Edit Modal for each stock movement -->
+                                <div class="modal fade" id="editStockMovementModal<?php echo $movement['movement_id']; ?>" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit Stock Movement</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form method="POST">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="movement_id" value="<?php echo $movement['movement_id']; ?>">
+                                                    <input type="hidden" name="product_id" value="<?php echo $movement['product_id']; ?>">
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Product</label>
+                                                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($movement['product_name']); ?>" disabled>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Movement Type</label>
+                                                        <select class="form-select" name="movement_type" required>
+                                                            <option value="Stock-in" <?php echo ($movement['movement_type'] == 'Stock-in') ? 'selected' : ''; ?>>Stock In</option>
+                                                            <option value="Stock-out" <?php echo ($movement['movement_type'] == 'Stock-out') ? 'selected' : ''; ?>>Stock Out</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Quantity</label>
+                                                        <input type="number" class="form-control" name="quantity" value="<?php echo $movement['quantity']; ?>" required min="1">
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Unit Price</label>
+                                                        <input type="number" class="form-control" name="unit_price" value="<?php echo $movement['unit_price']; ?>" required step="0.01" min="0">
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Supplier</label>
+                                                        <select class="form-select" name="supplier_id" required>
+                                                            <option value="">Select Supplier</option>
+                                                            <?php 
+                                                            $result->data_seek(0);
+                                                            while($supplier = $result->fetch_assoc()): 
+                                                            ?>
+                                                            <option value="<?php echo $supplier['supplier_id']; ?>" <?php echo ($movement['supplier_id'] == $supplier['supplier_id']) ? 'selected' : ''; ?>>
+                                                                <?php echo htmlspecialchars($supplier['supplier_name']); ?>
+                                                            </option>
+                                                            <?php endwhile; ?>
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Notes</label>
+                                                        <textarea class="form-control" name="notes" rows="3"><?php echo htmlspecialchars($movement['notes']); ?></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" name="update_stock_movement" class="btn btn-primary">Update Movement</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                                 <?php endwhile; ?>
                             </tbody>
                         </table>

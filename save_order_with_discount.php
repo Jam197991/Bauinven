@@ -81,11 +81,18 @@ try {
     // Start transaction
     $conn->begin_transaction();
 
-    // Prepare discount information
-    $discount_type = isset($data['discount_info']['customerType']) ? $data['discount_info']['customerType'] : null;
-    $discount_name = isset($data['discount_info']['customerName']) ? $data['discount_info']['customerName'] : null;
-    $discount_id = isset($data['discount_info']['customerId']) ? $data['discount_info']['customerId'] : null;
-    $discounted_products = isset($data['discount_info']['selectedProducts']) ? $data['discount_info']['selectedProducts'] : [];
+    // Prepare discount information - handle null values properly
+    $discount_type = 'NONE';
+    $discount_name = '';
+    $discount_id = '';
+    $discounted_products = [];
+    
+    if (isset($data['discount_info']) && $data['discount_info'] !== null) {
+        $discount_type = isset($data['discount_info']['customerType']) ? $data['discount_info']['customerType'] : 'NONE';
+        $discount_name = isset($data['discount_info']['customerName']) ? $data['discount_info']['customerName'] : '';
+        $discount_id = isset($data['discount_info']['customerId']) ? $data['discount_info']['customerId'] : '';
+        $discounted_products = isset($data['discount_info']['selectedProducts']) ? $data['discount_info']['selectedProducts'] : [];
+    }
 
     // Insert into orders table with discount information
     $order_sql = "INSERT INTO orders (total_amount, status, order_date, discount_type, discount_name, discount_id) 
@@ -109,25 +116,69 @@ try {
         throw new Exception("Error preparing items statement: " . $conn->error);
     }
 
+    // Track inventory updates by product_id to avoid multiple updates
+    $inventory_updates = [];
+    
     foreach ($data['items'] as $item) {
         $is_discounted = isset($item['is_pwd_discounted']) ? (int)$item['is_pwd_discounted'] : 0;
         $discounted_price = isset($item['discounted_price']) && $item['discounted_price'] !== null ? $item['discounted_price'] : $item['price'];
+        
         // Insert order item (one per row)
         $stmt->bind_param("iidid", $order_id, $item['id'], $item['price'], $is_discounted, $discounted_price);
         if (!$stmt->execute()) {
             throw new Exception("Error inserting order item: " . $stmt->error);
         }
-        // Update inventory (reduce stock by 1 for each item)
-        $update_inventory_sql = "UPDATE inventory SET quantity = quantity - 1, updated_at = NOW() WHERE product_id = ?";
-        $update_stmt = $conn->prepare($update_inventory_sql);
-        if (!$update_stmt) {
-            throw new Exception("Error preparing inventory update: " . $conn->error);
+        
+        // Track inventory updates
+        if (!isset($inventory_updates[$item['id']])) {
+            $inventory_updates[$item['id']] = 0;
         }
-        $update_stmt->bind_param("i", $item['id']);
-        if (!$update_stmt->execute()) {
-            throw new Exception("Error updating inventory: " . $update_stmt->error);
+        $inventory_updates[$item['id']]++;
+    }
+
+    // Update inventory for all products at once
+    foreach ($inventory_updates as $product_id => $quantity_to_deduct) {
+        // First check if inventory record exists
+        $check_sql = "SELECT COUNT(*) as count FROM inventory WHERE product_id = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        if (!$check_stmt) {
+            throw new Exception("Error preparing inventory check: " . $conn->error);
         }
-        $update_stmt->close();
+        
+        $check_stmt->bind_param("i", $product_id);
+        if (!$check_stmt->execute()) {
+            throw new Exception("Error checking inventory existence: " . $check_stmt->error);
+        }
+        
+        $result = $check_stmt->get_result();
+        $count = $result->fetch_assoc()['count'];
+        $check_stmt->close();
+        
+        if ($count > 0) {
+            // Update existing inventory record
+            $update_inventory_sql = "UPDATE inventory SET quantity = quantity - ?, updated_at = NOW() WHERE product_id = ?";
+            $update_stmt = $conn->prepare($update_inventory_sql);
+            if (!$update_stmt) {
+                throw new Exception("Error preparing inventory update: " . $conn->error);
+            }
+            $update_stmt->bind_param("ii", $quantity_to_deduct, $product_id);
+            if (!$update_stmt->execute()) {
+                throw new Exception("Error updating inventory: " . $update_stmt->error);
+            }
+            $update_stmt->close();
+        } else {
+            // Create new inventory record (this shouldn't happen in normal flow, but handle it)
+            $insert_inventory_sql = "INSERT INTO inventory (product_id, quantity, updated_at) VALUES (?, 0, NOW())";
+            $insert_stmt = $conn->prepare($insert_inventory_sql);
+            if (!$insert_stmt) {
+                throw new Exception("Error preparing inventory insert: " . $conn->error);
+            }
+            $insert_stmt->bind_param("i", $product_id);
+            if (!$insert_stmt->execute()) {
+                throw new Exception("Error creating inventory record: " . $insert_stmt->error);
+            }
+            $insert_stmt->close();
+        }
     }
 
     // Commit transaction

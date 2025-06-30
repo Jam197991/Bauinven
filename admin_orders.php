@@ -196,6 +196,39 @@ try {
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
+
+        .cancel-btn {
+            background: #dc3545;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .cancel-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -206,6 +239,13 @@ try {
             </a>
             <h1><i class="fas fa-shopping-bag"></i> Order Management</h1>
         </div>
+
+        <?php if(isset($_GET['success'])): ?>
+            <div class="alert alert-success"><?php echo htmlspecialchars($_GET['success']); ?></div>
+        <?php endif; ?>
+        <?php if(isset($_GET['error'])): ?>
+            <div class="alert alert-error"><?php echo htmlspecialchars($_GET['error']); ?></div>
+        <?php endif; ?>
 
         <div class="chef-only-notice">
             <i class="fas fa-info-circle"></i>
@@ -302,7 +342,12 @@ try {
                         echo '<td style="color:#28a745;">₱' . number_format($final_amount, 2) . '</td>';
                         echo '<td>' . $discount_info . '</td>';
                         echo '<td><span class="status-badge ' . $status_class . '">' . ucfirst($order['status']) . '</span></td>';
-                        echo '<td><a href="view_order_details.php?order_id=' . $order['order_id'] . '" class="view-details-btn">View Details</a></td>';
+                        echo '<td>';
+                        echo '<a href="view_order_details.php?order_id=' . $order['order_id'] . '" class="view-details-btn">View Details</a>';
+                        if (strtolower($order['status']) !== 'completed' && strtolower($order['status']) !== 'cancelled') {
+                             echo ' <a href="cancel_order.php?order_id=' . $order['order_id'] . '" class="cancel-btn" onclick="return confirm(\'Are you sure you want to cancel this order? This action cannot be undone.\')">Cancel</a>';
+                        }
+                        echo '</td>';
                         echo '</tr>';
                     }
                 } else {

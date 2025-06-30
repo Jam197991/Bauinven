@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Manila'); // Set to your local timezone
 // Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -20,11 +21,13 @@ if ($conn->connect_error) {
 }
 
 // Get orders with their items
+$today = date('Y-m-d');
 $orders_sql = "SELECT o.*, 
                GROUP_CONCAT(p.product_name SEPARATOR ', ') as items
                FROM orders o
                LEFT JOIN order_items oi ON o.order_id = oi.order_id
                LEFT JOIN products p ON oi.product_id = p.product_id
+               WHERE DATE(o.order_date) = '$today'
                GROUP BY o.order_id
                ORDER BY o.order_date DESC";
 
@@ -450,12 +453,7 @@ error_log("Number of orders found: " . $orders_result->num_rows);
                 <div class="welcome-text">Welcome back, <?php echo htmlspecialchars($_SESSION['username']); ?>!</div>
             </div>
             <div style="display: flex; gap: 1rem; align-items: center;">
-                <button onclick="testFunction()" style="background: #ffc107; color: #333; padding: 0.8rem 1.5rem; border: none; border-radius: 25px; cursor: pointer; font-weight: 500;">
-                    <i class="fas fa-bug"></i> Test JS
-                </button>
-                <button onclick="testAjax()" style="background: #17a2b8; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 25px; cursor: pointer; font-weight: 500;">
-                    <i class="fas fa-network-wired"></i> Test AJAX
-                </button>
+                
                 <a href="logout.php" class="logout-btn">
                     <i class="fas fa-power-off"></i>
                     <span>Logout</span>
@@ -489,11 +487,15 @@ error_log("Number of orders found: " . $orders_result->num_rows);
                         echo '</div>';
                     }
                     
-                    echo '<select class="status-select ' . $statusClass . '" onchange="updateOrderStatus(' . $order['order_id'] . ', this.value)">';
-                    echo '<option value="pending" ' . ($order['status'] == 'pending' ? 'selected' : '') . '>⏳ Pending</option>';
-                    echo '<option value="processing" ' . ($order['status'] == 'processing' ? 'selected' : '') . '>👨‍🍳 Processing</option>';
-                    echo '<option value="completed" ' . ($order['status'] == 'completed' ? 'selected' : '') . '>✅ Completed</option>';
-                    echo '</select>';
+                    if ($order['status'] == 'cancelled') {
+                        echo '<span class="status-label status-cancelled" style="color: #dc3545; font-weight: bold; display: inline-block; margin-top: 0.5rem;">❌ Cancelled</span>';
+                    } else {
+                        echo '<select class="status-select ' . $statusClass . '" onchange="updateOrderStatus(' . $order['order_id'] . ', this.value)">';
+                        echo '<option value="pending" ' . ($order['status'] == 'pending' ? 'selected' : '') . '>⏳ Pending</option>';
+                        echo '<option value="processing" ' . ($order['status'] == 'processing' ? 'selected' : '') . '>👨‍🍳 Processing</option>';
+                        echo '<option value="completed" ' . ($order['status'] == 'completed' ? 'selected' : '') . '>✅ Completed</option>';
+                        echo '</select>';
+                    }
                     echo '</div>';
                 }
             } else {

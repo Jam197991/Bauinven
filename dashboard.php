@@ -1667,6 +1667,11 @@ $products_result = $conn->query($products_sql);
                         <label for="customer-id">ID Number:</label>
                         <input type="text" id="customer-id" placeholder="Enter customer's ID number" required>
                     </div>
+                    <div class="form-group">
+                        <label for="discount-percentage">Discount Percentage (%):</label>
+                        <input type="number" id="discount-percentage" placeholder="Enter discount percentage (e.g., 20)" min="0" max="100" value="20" required>
+                        <small style="color: #666; font-size: 0.8rem;">Default: 20% for PWD/SC customers</small>
+                    </div>
                 </div>
                 
                 <div class="discount-products-section">
@@ -2461,6 +2466,7 @@ $products_result = $conn->query($products_sql);
                 document.getElementById('customer-type').value = '';
                 document.getElementById('customer-name').value = '';
                 document.getElementById('customer-id').value = '';
+                document.getElementById('discount-percentage').value = '20';
                 selectedDiscountProducts = [];
                 updateDiscountSummary();
             }
@@ -2577,8 +2583,9 @@ $products_result = $conn->query($products_sql);
             const originalTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
             const selectedTotal = selectedDiscountProducts.reduce((total, item) => total + item.total, 0);
             
-            // Calculate discount (20% for PWD/SC)
-            const discountRate = 0.20; // 20% discount
+            // Get discount percentage from input field
+            const discountPercentage = parseFloat(document.getElementById('discount-percentage').value) || 20;
+            const discountRate = discountPercentage / 100; // Convert percentage to decimal
             const discountAmount = selectedTotal * discountRate;
             const finalTotal = originalTotal - discountAmount;
             
@@ -2592,10 +2599,16 @@ $products_result = $conn->query($products_sql);
             const customerType = document.getElementById('customer-type').value;
             const customerName = document.getElementById('customer-name').value.trim();
             const customerId = document.getElementById('customer-id').value.trim();
+            const discountPercentage = parseFloat(document.getElementById('discount-percentage').value) || 20;
             
             // Validate form
             if (!customerType || !customerName || !customerId) {
                 showNotification('Please fill in all customer information fields!', 'error');
+                return;
+            }
+            
+            if (discountPercentage < 0 || discountPercentage > 100) {
+                showNotification('Discount percentage must be between 0 and 100!', 'error');
                 return;
             }
             
@@ -2604,8 +2617,9 @@ $products_result = $conn->query($products_sql);
                 return;
             }
             
-            // Calculate discount amount
-            const discountAmount = selectedDiscountProducts.reduce((total, item) => total + (item.price * item.quantity), 0) * 0.20;
+            // Calculate discount amount using custom percentage
+            const discountRate = discountPercentage / 100;
+            const discountAmount = selectedDiscountProducts.reduce((total, item) => total + (item.price * item.quantity), 0) * discountRate;
             if (discountAmount === 0) {
                 showNotification('Please enter a discount quantity greater than 0 for at least one product!', 'error');
                 return;
@@ -2615,9 +2629,10 @@ $products_result = $conn->query($products_sql);
             discountInfo = {
                 customerType: customerType,
                 customerName: customerName,
-                customerId: customerId, 
+                customerId: customerId,
+                discountPercentage: discountPercentage,
                 selectedProducts: selectedDiscountProducts,
-                discountRate: 0.20,
+                discountRate: discountRate,
                 appliedAt: new Date()
             };
             
@@ -2628,14 +2643,14 @@ $products_result = $conn->query($products_sql);
             window.discountInfo = discountInfo;
             window.selectedDiscountProducts = selectedDiscountProducts;
          
-            // Update cart display to show discountv
+            // Update cart display to show discount
             updateCartWithDiscount();
             
             // Close modal
             closeDiscountModal();
             
             // Show success notification 
-            showNotification(`Discount applied! Saved ₱${discountAmount.toFixed(2)} for ${customerType} customer.`, 'success');
+            showNotification(`Discount applied! Saved ₱${discountAmount.toFixed(2)} (${discountPercentage}%) for ${customerType} customer.`, 'success');
         }
 
         // Update cart display with discount information
@@ -2645,7 +2660,7 @@ $products_result = $conn->query($products_sql);
             
             if (discountApplied && discountInfo) {
                 const totalDiscountedItems = discountInfo.selectedProducts.reduce((sum, item) => sum + item.quantity, 0);
-                const discountAmount = discountInfo.selectedProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.20;
+                const discountAmount = discountInfo.selectedProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0) * discountInfo.discountRate;
 
                 // Build a breakdown of discounted items
                 let discountedItemsHtml = '';
@@ -2653,7 +2668,7 @@ $products_result = $conn->query($products_sql);
                     discountedItemsHtml += `
                         <div style="font-size:0.9rem; margin-left:1rem;">
                             <span>${item.name} x${item.quantity}</span>
-                            <span style="color:#28a745;">-₱${(item.price * item.quantity * 0.20).toFixed(2)}</span>
+                            <span style="color:#28a745;">-₱${(item.price * item.quantity * discountInfo.discountRate).toFixed(2)}</span>
                         </div>
                     `;
                 });
@@ -2662,7 +2677,7 @@ $products_result = $conn->query($products_sql);
                 const discountInfoHtml = `
                     <div class="discount-info" style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary-color);">
                         <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color);">
-                            <i class="fas fa-percentage"></i> ${discountInfo.customerType} Discount Applied
+                            <i class="fas fa-percentage"></i> ${discountInfo.customerType} Discount Applied (${discountInfo.discountPercentage}%)
                         </h4>
                         <p style="margin: 0.2rem 0; font-size: 0.9rem;">
                             <strong>Customer:</strong> ${discountInfo.customerName}
@@ -2788,7 +2803,7 @@ $products_result = $conn->query($products_sql);
                 const discountedItem = hasDiscount ? 
                     discountInfo.selectedProducts.find(discItem => discItem.id === item.id) : null;
                 
-                const discountAmount = hasDiscount ? discountedItem.total * 0.20 : 0;
+                const discountAmount = hasDiscount ? discountedItem.total * discountInfo.discountRate : 0;
                 const finalItemTotal = itemTotal - discountAmount;
                 
                 receiptItems.innerHTML += `
@@ -2797,7 +2812,7 @@ $products_result = $conn->query($products_sql);
                         <span>₱${itemTotal.toFixed(2)}</span>
                     </div>
                     ${hasDiscount ? `<div class="receipt-discount" style="color: #28a745; font-size: 0.9rem; margin-left: 1rem;">
-                        <span>${discountInfo.customerType} Discount (20%) on ${discountedItem.quantity} item(s)</span>
+                        <span>${discountInfo.customerType} Discount (${discountInfo.discountPercentage}%) on ${discountedItem.quantity} item(s)</span>
                         <span>-₱${discountAmount.toFixed(2)}</span>
                     </div>` : ''}
                 `;
@@ -2805,7 +2820,7 @@ $products_result = $conn->query($products_sql);
             
             // Calculate final total with discount
             const finalTotal = discountApplied && discountInfo ? 
-                total - (discountInfo.selectedProducts.reduce((sum, item) => sum + item.total, 0) * 0.20) : 
+                total - (discountInfo.selectedProducts.reduce((sum, item) => sum + item.total, 0) * discountInfo.discountRate) : 
                 total;
             
             // Add discount information to receipt if applied
@@ -2814,7 +2829,7 @@ $products_result = $conn->query($products_sql);
                 receiptItems.innerHTML += `
                     <div class="receipt-discount-info" style="background: #e8f5e8; padding: 1rem; margin: 1rem 0; border-radius: 8px; border-left: 4px solid #28a745;">
                         <h4 style="margin: 0 0 0.5rem 0; color: #28a745;">
-                            <i class="fas fa-percentage"></i> ${discountInfo.customerType} Discount Applied
+                            <i class="fas fa-percentage"></i> ${discountInfo.customerType} Discount Applied (${discountInfo.discountPercentage}%)
                         </h4>
                         <p style="margin: 0.2rem 0; font-size: 0.9rem;">
                             <strong>Discounted Items:</strong> ${discountInfo.selectedProducts.length} products (${totalDiscountedItems} total items)
@@ -2846,9 +2861,25 @@ $products_result = $conn->query($products_sql);
             }
         });
 
+        // Close receipt modal
+        function closeReceipt() {
+            const modal = document.getElementById('receipt-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
         // Initialize discount button visibility
         document.addEventListener('DOMContentLoaded', function() {
             updateDiscountButton();
+            
+            // Add event listener to discount percentage input
+            const discountPercentageInput = document.getElementById('discount-percentage');
+            if (discountPercentageInput) {
+                discountPercentageInput.addEventListener('input', function() {
+                    updateDiscountSummary();
+                });
+            }
         });
 
         // Function to add order to database
@@ -2875,7 +2906,7 @@ $products_result = $conn->query($products_sql);
                         name: item.name,
                         price: item.price,
                         is_pwd_discounted: true,
-                        discounted_price: (item.price * 0.8)
+                        discounted_price: (item.price * (1 - discountInfo.discountRate))
                     });
                 }
                 // Add non-discounted items
@@ -2931,6 +2962,12 @@ $products_result = $conn->query($products_sql);
                     window.discountApplied = false;
                     window.discountInfo = null;
                     window.selectedDiscountProducts = [];
+                    
+                    // Remove discount info from cart display
+                    const discountInfoElement = document.querySelector('.discount-info');
+                    if (discountInfoElement) {
+                        discountInfoElement.remove();
+                    }
                     
                     // Update cart display
                     updateCart();
