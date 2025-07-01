@@ -140,12 +140,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $operation = $_POST['operation']; // 'add', 'update', or 'delete'
         
         if ($operation == 'delete') {
-            $sql = "DELETE FROM inventory WHERE product_id = ?";
+            $sql = "DELETE FROM products WHERE product_id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $product_id);
         } else {
-            // Check if inventory record exists
-            $check_sql = "SELECT quantity FROM inventory WHERE product_id = ?";
+            // Check if products record exists
+            $check_sql = "SELECT quantity FROM products WHERE product_id = ?";
             $check_stmt = $conn->prepare($check_sql);
             $check_stmt->bind_param("i", $product_id);
             $check_stmt->execute();
@@ -153,12 +153,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if ($result->num_rows > 0) {
                 // Update existing record
-                $sql = "UPDATE inventory SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
+                $sql = "UPDATE products SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ii", $quantity, $product_id);
             } else {
                 // Insert new record
-                $sql = "INSERT INTO inventory (product_id, quantity, updated_at) VALUES (?, ?, NOW())";
+                $sql = "INSERT INTO products (product_id, quantity, updated_at) VALUES (?, ?, NOW())";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ii", $product_id, $quantity);
             }
@@ -177,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $sql = "SELECT p.*, c.category_type, COALESCE(i.quantity, 0) as quantity 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.category_id 
-        LEFT JOIN inventory i ON p.product_id = i.product_id
+        LEFT JOIN products i ON p.product_id = i.product_id
         ORDER BY p.created_at DESC";    
 $result = $conn->query($sql);
 
@@ -277,6 +277,87 @@ $categories_result = $conn->query($categories_sql);
             color: #f39c12;
             font-weight: bold;
         }
+        .section-header {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+            border-left: 6px solid #3498db;
+            padding-left: 16px;
+            background: #f4f8fb;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.07);
+        }
+        /* Cool Table Styles */
+        #productsTable {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(44, 62, 80, 0.08), 0 1.5px 4px rgba(52, 152, 219, 0.07);
+            overflow: hidden;
+        }
+        #productsTable thead th {
+            background: linear-gradient(90deg,rgb(15, 127, 22) 0%,rgb(101, 219, 142) 100%);
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            letter-spacing: 0.5px;
+        }
+        #productsTable tbody tr {
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        #productsTable tbody tr:hover {
+            background: #eaf6ff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.08);
+        }
+        #productsTable td, #productsTable th {
+            vertical-align: middle;
+            border: none;
+        }
+        #productsTable td {
+            font-size: 1rem;
+            color: #34495e;
+        }
+        .action-buttons .btn-primary {
+            background: linear-gradient(90deg,rgb(15, 127, 22) 0%,rgb(101, 219, 142) 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .action-buttons .btn-primary:hover {
+            background: linear-gradient(90deg,rgb(15, 127, 22) 0%,rgb(101, 219, 142) 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(52,152,219,0.12);
+        }
+        .action-buttons .btn-danger {
+            background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(241, 196, 15, 0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .action-buttons .btn-danger:hover {
+            background: linear-gradient(90deg, #f09819 0%, #ff5858 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(241, 196, 15, 0.12);
+        }
+        #productsTable .product-image {
+            border: 2px solid #eaf6ff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.07);
+            transition: transform 0.2s;
+        }
+        #productsTable .product-image:hover {
+            transform: scale(1.08) rotate(-2deg);
+            border-color: #3498db;
+        }
+        #productsTable tbody tr td {
+            padding: 0.75rem 1rem;
+        }
+        #productsTable thead th {
+            padding: 1rem 1rem;
+        }
     </style>
 </head>
 <body>
@@ -287,7 +368,7 @@ $categories_result = $conn->query($categories_sql);
         <div class="container-fluid">
             <div class="row mb-4">
                 <div class="col">
-                    <h2>Product Management</h2>
+                    <div class="section-header">Product Management</div>
                 </div>
                 <div class="col text-end">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">

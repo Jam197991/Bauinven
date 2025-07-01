@@ -72,7 +72,7 @@ try {
     $stmt->close();
 
     // 4. Restore quantities to inventory
-    $update_inventory_stmt = $conn->prepare("UPDATE inventory SET quantity = quantity + ?, updated_at = NOW() WHERE product_id = ?");
+    $update_inventory_stmt = $conn->prepare("UPDATE products SET quantity = quantity + ?, updated_at = NOW() WHERE product_id = ?");
     while ($item = $items_result->fetch_assoc()) {
         $update_inventory_stmt->bind_param("ii", $item['quantity'], $item['product_id']);
         if (!$update_inventory_stmt->execute()) {

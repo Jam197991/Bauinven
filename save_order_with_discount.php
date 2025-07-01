@@ -31,28 +31,20 @@ try {
 
     foreach ($requested_quantities as $product_id => $quantity) {
         // Check current inventory for this product
-        $inventory_sql = "SELECT p.product_name, COALESCE(i.quantity, 0) as available_stock 
-                         FROM products p 
-                         LEFT JOIN inventory i ON p.product_id = i.product_id 
-                         WHERE p.product_id = ?";
+        $inventory_sql = "SELECT product_name, quantity as available_stock FROM products WHERE product_id = ?";
         $stmt = $conn->prepare($inventory_sql);
         if (!$stmt) {
             throw new Exception("Error preparing inventory check: " . $conn->error);
         }
-        
         $stmt->bind_param("i", $product_id);
         if (!$stmt->execute()) {
             throw new Exception("Error checking inventory: " . $stmt->error);
         }
-        
         $result = $stmt->get_result();
         $inventory_data = $result->fetch_assoc();
-        
         if (!$inventory_data) {
-            // This case should ideally not happen if data comes from a valid source
             continue;
         }
-
         $product_name = $inventory_data['product_name'];
         $available_stock = $inventory_data['available_stock'];
         
@@ -138,47 +130,16 @@ try {
 
     // Update inventory for all products at once
     foreach ($inventory_updates as $product_id => $quantity_to_deduct) {
-        // First check if inventory record exists
-        $check_sql = "SELECT COUNT(*) as count FROM inventory WHERE product_id = ?";
-        $check_stmt = $conn->prepare($check_sql);
-        if (!$check_stmt) {
-            throw new Exception("Error preparing inventory check: " . $conn->error);
+        $update_inventory_sql = "UPDATE products SET quantity = quantity - ?, updated_at = NOW() WHERE product_id = ?";
+        $update_stmt = $conn->prepare($update_inventory_sql);
+        if (!$update_stmt) {
+            throw new Exception("Error preparing inventory update: " . $conn->error);
         }
-        
-        $check_stmt->bind_param("i", $product_id);
-        if (!$check_stmt->execute()) {
-            throw new Exception("Error checking inventory existence: " . $check_stmt->error);
+        $update_stmt->bind_param("ii", $quantity_to_deduct, $product_id);
+        if (!$update_stmt->execute()) {
+            throw new Exception("Error updating inventory: " . $update_stmt->error);
         }
-        
-        $result = $check_stmt->get_result();
-        $count = $result->fetch_assoc()['count'];
-        $check_stmt->close();
-        
-        if ($count > 0) {
-            // Update existing inventory record
-            $update_inventory_sql = "UPDATE inventory SET quantity = quantity - ?, updated_at = NOW() WHERE product_id = ?";
-            $update_stmt = $conn->prepare($update_inventory_sql);
-            if (!$update_stmt) {
-                throw new Exception("Error preparing inventory update: " . $conn->error);
-            }
-            $update_stmt->bind_param("ii", $quantity_to_deduct, $product_id);
-            if (!$update_stmt->execute()) {
-                throw new Exception("Error updating inventory: " . $update_stmt->error);
-            }
-            $update_stmt->close();
-        } else {
-            // Create new inventory record (this shouldn't happen in normal flow, but handle it)
-            $insert_inventory_sql = "INSERT INTO inventory (product_id, quantity, updated_at) VALUES (?, 0, NOW())";
-            $insert_stmt = $conn->prepare($insert_inventory_sql);
-            if (!$insert_stmt) {
-                throw new Exception("Error preparing inventory insert: " . $conn->error);
-            }
-            $insert_stmt->bind_param("i", $product_id);
-            if (!$insert_stmt->execute()) {
-                throw new Exception("Error creating inventory record: " . $insert_stmt->error);
-            }
-            $insert_stmt->close();
-        }
+        $update_stmt->close();
     }
 
     // Commit transaction

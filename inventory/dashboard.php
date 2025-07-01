@@ -27,14 +27,44 @@ $suppliers_result = mysqli_query($conn, $suppliers_query);
 $suppliers_count = mysqli_fetch_assoc($suppliers_result)['total_suppliers'];
 
 // Get low stock products (less than 50 items)
-$low_stock_query = "SELECT p.*, c.category_name, i.quantity, i.updated_at 
+$low_stock_query = "SELECT p.*, c.category_name 
                    FROM products p 
                    LEFT JOIN categories c ON p.category_id = c.category_id 
-                   LEFT JOIN inventory i ON p.product_id = i.product_id 
-                   WHERE i.quantity < 50 
-                   ORDER BY i.quantity ASC 
-                   LIMIT 5";
+                   WHERE p.quantity < 50 
+                   ORDER BY p.quantity ASC 
+                   LIMIT 100";
 $low_stock_result = mysqli_query($conn, $low_stock_query);
+
+// Stock category counts
+$low_stock_count_query = "SELECT COUNT(*) as count FROM products WHERE quantity < 50 AND quantity > 1";
+$low_stock_count = mysqli_fetch_assoc(mysqli_query($conn, $low_stock_count_query))['count'];
+
+$normal_stock_count_query = "SELECT COUNT(*) as count FROM products WHERE quantity >= 50 AND quantity <= 200";
+$normal_stock_count = mysqli_fetch_assoc(mysqli_query($conn, $normal_stock_count_query))['count'];
+
+$high_stock_count_query = "SELECT COUNT(*) as count FROM products WHERE quantity > 200";
+$high_stock_count = mysqli_fetch_assoc(mysqli_query($conn, $high_stock_count_query))['count'];
+
+$no_stock_count_query = "SELECT COUNT(*) as count FROM products WHERE quantity = 0";
+$no_stock_count = mysqli_fetch_assoc(mysqli_query($conn, $no_stock_count_query))['count'];
+
+// New queries for normal and high stock products
+$normal_stock_query = "SELECT p.*, c.category_name 
+                   FROM products p 
+                   LEFT JOIN categories c ON p.category_id = c.category_id 
+                   WHERE p.quantity >= 50 AND p.quantity <= 200 
+                   ORDER BY p.quantity ASC 
+                   LIMIT 100";
+$normal_stock_result = mysqli_query($conn, $normal_stock_query);
+
+$high_stock_query = "SELECT p.*, c.category_name 
+                   FROM products p 
+                   LEFT JOIN categories c ON p.category_id = c.category_id 
+                   WHERE p.quantity > 200 
+                   ORDER BY p.quantity ASC 
+                   LIMIT 100";
+$high_stock_result = mysqli_query($conn, $high_stock_query);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,6 +74,8 @@ $low_stock_result = mysqli_query($conn, $low_stock_query);
     <title>Inventory Dashboard</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <!-- Custom CSS -->
     <link href="../img/bau.jpg" rel="icon">
     <style>
@@ -201,34 +233,77 @@ $low_stock_result = mysqli_query($conn, $low_stock_query);
                     </div>
                 </div>
                 <div class="card-value"><?php echo number_format($suppliers_count); ?></div>
-            </div>            
+            </div>  
+
+            <!-- New Stock Category Cards -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Low Stock Items</h3>
+                    <div class="card-icon bg-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="card-value"><?php echo number_format($low_stock_count); ?></div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Normal Stock</h3>
+                    <div class="card-icon bg-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="card-value"><?php echo number_format($normal_stock_count); ?></div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">High Stock</h3>
+                    <div class="card-icon bg-primary">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+                <div class="card-value"><?php echo number_format($high_stock_count); ?></div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">No Stock</h3>
+                    <div class="card-icon bg-warning">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                </div>
+                <div class="card-value"><?php echo number_format($no_stock_count); ?></div>
+            </div>
+            <!-- End New Stock Category Cards -->
         </div>
 
-        <div class="low-stock-table">
-            <h2>Low Stock Products</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Product Name</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Current Stock</th>
-                        <th>Last Updated</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while($product = mysqli_fetch_assoc($low_stock_result)): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($product['product_name']); ?></td>
-                        <td><?php echo htmlspecialchars($product['category_name'] ?? 'Uncategorized'); ?></td>
-                        <td>₱<?php echo number_format($product['price'], 2); ?></td>
-                        <td class="stock-warning"><?php echo $product['quantity']; ?> units</td>
-                        <td><?php echo date('M d, Y', strtotime($product['updated_at'])); ?></td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
     </div>
 </body>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#lowStockTable').DataTable({
+        "pageLength": 5,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        "language": {
+            "search": "Search:"
+        }
+    });
+    $('#normalStockTable').DataTable({
+        "pageLength": 5,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        "language": {
+            "search": "Search:"
+        }
+    });
+    $('#highStockTable').DataTable({
+        "pageLength": 5,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        "language": {
+            "search": "Search:"
+        }
+    });
+});
+</script>
 </html>

@@ -19,20 +19,8 @@ if (empty($search)) {
 }
 
 try {
-    // Search products with category and inventory information
-    $search_sql = "SELECT p.*, c.category_name, c.category_type, COALESCE(i.quantity, 0) as inventory_quantity
-                   FROM products p 
-                   JOIN categories c ON p.category_id = c.category_id
-                   LEFT JOIN inventory i ON p.product_id = i.product_id
-                   WHERE (p.product_name LIKE ? OR p.description LIKE ? OR c.category_name LIKE ?)
-                   ORDER BY 
-                       CASE 
-                           WHEN p.product_name LIKE ? THEN 1
-                           WHEN p.product_name LIKE ? THEN 2
-                           ELSE 3
-                       END,
-                       p.product_name ASC
-                   LIMIT 10";
+    // Search products with category and quantity information
+    $search_sql = "SELECT p.*, c.category_name, c.category_type FROM products p JOIN categories c ON p.category_id = c.category_id WHERE (p.product_name LIKE ? OR p.description LIKE ? OR c.category_name LIKE ?) ORDER BY CASE WHEN p.product_name LIKE ? THEN 1 WHEN p.product_name LIKE ? THEN 2 ELSE 3 END, p.product_name ASC LIMIT 10";
     
     $search_term = "%$search%";
     $exact_start = "$search%";

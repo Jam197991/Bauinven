@@ -38,12 +38,19 @@
                 </a>
             </li>
 
-            <li class="nav-item">
-                <a href="reports.php" class="nav-link">
+            <li class="nav-item has-dropdown">
+                <a href="#" class="nav-link" id="reportsDropdownToggle">
                     <i class="fas fa-chart-bar"></i>
                     <span>Reports</span>
+                    <i class="fas fa-caret-down" style="margin-left:auto;"></i>
                 </a>
+                <div class="sidebar-dropdown-menu" id="reportsDropdownMenu" style="display:none;">
+                    <a class="dropdown-item" href="SalesReport.php">Sales Report</a>
+                    <a class="dropdown-item" href="InventoryReport.php">Inventory Report</a>
+                    <a class="dropdown-item" href="AnalyticalReport.php">Analytical Report</a>
+                </div>
             </li>
+
             
         </ul>
     </nav>
@@ -56,8 +63,8 @@
     top: 0;
     height: 100vh;
     width: 250px;
-    background:rgb(193, 232, 137);
-    color: black;
+    background: linear-gradient(180deg, #388E3C 0%, #81C784 100%);
+    color: #fff;
     transition: all 0.3s ease;
     z-index: 1000;
 }
@@ -77,12 +84,13 @@
 .sidebar-header h3 {
     margin: 0;
     font-size: 1.2rem;
+    color: #fff;
 }
 
 .toggle-btn {
     background: none;
     border: none;
-    color: black;
+    color: #fff;
     cursor: pointer;
     font-size: 1.2rem;
 }
@@ -101,13 +109,14 @@
     display: flex;
     align-items: center;
     padding: 12px 20px;
-    color: black;
+    color: #fff;
     text-decoration: none;
     transition: all 0.3s ease;
 }
 
 .nav-link:hover {
-    background: rgba(84, 197, 89, 0.51);
+    background: #66bb6a;
+    color: #1b5e20;
 }
 
 .nav-link i {
@@ -122,6 +131,26 @@
 
 .sidebar.collapsed .sidebar-header h3 {
     display: none;
+}
+
+.sidebar-dropdown-menu {
+    background: #c8e6c9;
+    padding-left: 30px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-radius: 0 0 8px 8px;
+}
+.sidebar-dropdown-menu .dropdown-item {
+    display: block;
+    color: #388E3C;
+    padding: 6px 0;
+    text-decoration: none;
+    font-size: 0.95em;
+    transition: color 0.2s, background 0.2s;
+}
+.sidebar-dropdown-menu .dropdown-item:hover {
+    color: #fff;
+    background: #388E3C;
 }
 
 @media (max-width: 768px) {
@@ -170,5 +199,26 @@ document.addEventListener('DOMContentLoaded', function() {
             sidebar.classList.remove('expanded');
         }
     });
+
+    // Sidebar dropdown toggle
+    const reportsDropdownToggle = document.getElementById('reportsDropdownToggle');
+    const reportsDropdownMenu = document.getElementById('reportsDropdownMenu');
+    if (reportsDropdownToggle && reportsDropdownMenu) {
+        reportsDropdownToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            reportsDropdownMenu.style.display = reportsDropdownMenu.style.display === 'block' ? 'none' : 'block';
+        });
+        // Optional: close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!reportsDropdownToggle.contains(e.target) && !reportsDropdownMenu.contains(e.target)) {
+                reportsDropdownMenu.style.display = 'none';
+            }
+        });
+    }
 });
 </script>
+<!-- Bootstrap 4 (example CDN setup) -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

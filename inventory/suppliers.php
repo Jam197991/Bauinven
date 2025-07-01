@@ -86,15 +86,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bind_param("isiddis", $product_id, $movement_type, $quantity, $unit_price, $total_amount, $supplier_id, $notes);
             $stmt->execute();
             
-            // Check if product exists in inventory
-            $check_sql = "SELECT quantity FROM inventory WHERE product_id = ?";
+            // Check if product exists in products
+            $check_sql = "SELECT quantity FROM products WHERE product_id = ?";
             $check_stmt = $conn->prepare($check_sql);
             $check_stmt->bind_param("i", $product_id);
             $check_stmt->execute();
             $check_result = $check_stmt->get_result();
             
             if ($check_result->num_rows > 0) {
-                // Product exists in inventory, update quantity
+                // Product exists in products, update quantity
                 $row = $check_result->fetch_assoc();
                 $current_quantity = $row['quantity'];
                 
@@ -110,14 +110,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $new_quantity = $current_quantity;
                 }
                 
-                $update_sql = "UPDATE inventory SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
+                $update_sql = "UPDATE products SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
                 $update_stmt = $conn->prepare($update_sql);
                 $update_stmt->bind_param("ii", $new_quantity, $product_id);
                 $update_stmt->execute();
             } else {
-                // Product doesn't exist in inventory, insert new record
+                // Product doesn't exist in products, insert new record
                 if ($movement_type == 'Stock-in') {
-                    $insert_sql = "INSERT INTO inventory (product_id, quantity, updated_at) VALUES (?, ?, NOW())";
+                    $insert_sql = "INSERT INTO products (product_id, quantity, updated_at) VALUES (?, ?, NOW())";
                     $insert_stmt = $conn->prepare($insert_sql);
                     $insert_stmt->bind_param("ii", $product_id, $quantity);
                     $insert_stmt->execute();
@@ -166,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $original_movement_type = $original_movement['movement_type'];
 
             // Get current inventory
-            $inv_sql = "SELECT quantity FROM inventory WHERE product_id = ?";
+            $inv_sql = "SELECT quantity FROM products WHERE product_id = ?";
             $inv_stmt = $conn->prepare($inv_sql);
             $inv_stmt->bind_param("i", $product_id);
             $inv_stmt->execute();
@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
             // Update inventory
-            $update_inv_sql = "UPDATE inventory SET quantity = ? WHERE product_id = ?";
+            $update_inv_sql = "UPDATE products SET quantity = ? WHERE product_id = ?";
             $update_inv_stmt = $conn->prepare($update_inv_sql);
             $update_inv_stmt->bind_param("ii", $final_inventory, $product_id);
             $update_inv_stmt->execute();
@@ -240,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $delete_stmt->execute();
 
             // Get current inventory
-            $inv_sql = "SELECT quantity FROM inventory WHERE product_id = ?";
+            $inv_sql = "SELECT quantity FROM products WHERE product_id = ?";
             $inv_stmt = $conn->prepare($inv_sql);
             $inv_stmt->bind_param("i", $product_id);
             $inv_stmt->execute();
@@ -258,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
             // Update inventory
-            $update_inv_sql = "UPDATE inventory SET quantity = ? WHERE product_id = ?";
+            $update_inv_sql = "UPDATE products SET quantity = ? WHERE product_id = ?";
             $update_inv_stmt = $conn->prepare($update_inv_sql);
             $update_inv_stmt->bind_param("ii", $new_inventory, $product_id);
             $update_inv_stmt->execute();
@@ -359,6 +359,78 @@ $products_json = json_encode($products_array);
             opacity: 1;
             box-shadow: 0 0 12px rgba(0,0,0,0.15);
         }
+        .section-header {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+            border-left: 6px solid #3498db;
+            padding-left: 16px;
+            background: #f4f8fb;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.07);
+        }
+        /* Cool Table Styles */
+        #suppliersTable {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(44, 62, 80, 0.08), 0 1.5px 4px rgba(52, 152, 219, 0.07);
+            overflow: hidden;
+        }
+        #suppliersTable thead th {
+            background: linear-gradient(90deg,rgb(15, 127, 22) 0%,rgb(101, 219, 142) 100%);
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            letter-spacing: 0.5px;
+        }
+        #suppliersTable tbody tr {
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        #suppliersTable tbody tr:hover {
+            background: #eaf6ff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.08);
+        }
+        #suppliersTable td, #suppliersTable th {
+            vertical-align: middle;
+            border: none;
+        }
+        #suppliersTable td {
+            font-size: 1rem;
+            color: #34495e;
+        }
+        .action-buttons .btn-primary {
+            background: linear-gradient(90deg, #6dd5fa 0%, #3498db 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .action-buttons .btn-primary:hover {
+            background: linear-gradient(90deg, #3498db 0%, #6dd5fa 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(52,152,219,0.12);
+        }
+        .action-buttons .btn-danger {
+            background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(241, 196, 15, 0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .action-buttons .btn-danger:hover {
+            background: linear-gradient(90deg, #f09819 0%, #ff5858 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(241, 196, 15, 0.12);
+        }
+        #suppliersTable tbody tr td {
+            padding: 0.75rem 1rem;
+        }
+        #suppliersTable thead th {
+            padding: 1rem 1rem;
+        }
     </style>
 </head>
 <body>
@@ -369,7 +441,7 @@ $products_json = json_encode($products_array);
         <div class="container-fluid">
             <div class="row mb-4">
                 <div class="col">
-                    <h2>Supplier Management</h2>
+                    <div class="section-header">Supplier Management</div>
                 </div>
                 <div class="col text-end">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
@@ -471,7 +543,7 @@ $products_json = json_encode($products_array);
             <!-- Stock Movements Section -->
             <div class="row mb-4">
                 <div class="col">
-                    <h3>Stock Movements</h3>
+                    <div class="section-header">Stock Movements</div>
                 </div>
             </div>
 

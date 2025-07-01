@@ -265,6 +265,88 @@ $result = $conn->query($sql);
             opacity: 1;
             box-shadow: 0 0 12px rgba(0,0,0,0.15);
         }
+        .section-header {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+            border-left: 6px solid #3498db;
+            padding-left: 16px;
+            background: #f4f8fb;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.07);
+        }
+
+        /* Cool Table Styles */
+        #categoriesTable {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(44, 62, 80, 0.08), 0 1.5px 4px rgba(52, 152, 219, 0.07);
+            overflow: hidden;
+        }
+        #categoriesTable thead th {
+            background: linear-gradient(90deg,rgb(15, 127, 22) 0%,rgb(101, 219, 142) 100%);
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            letter-spacing: 0.5px;
+        }
+        #categoriesTable tbody tr {
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        #categoriesTable tbody tr:hover {
+            background: #eaf6ff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.08);
+        }
+        #categoriesTable td, #categoriesTable th {
+            vertical-align: middle;
+            border: none;
+        }
+        #categoriesTable td {
+            font-size: 1rem;
+            color: #34495e;
+        }
+        .action-buttons .btn-primary {
+            background: linear-gradient(90deg, #6dd5fa 0%, #3498db 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .action-buttons .btn-primary:hover {
+            background: linear-gradient(90deg, #3498db 0%, #6dd5fa 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(52,152,219,0.12);
+        }
+        .action-buttons .btn-danger {
+            background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(241, 196, 15, 0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .action-buttons .btn-danger:hover {
+            background: linear-gradient(90deg, #f09819 0%, #ff5858 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(241, 196, 15, 0.12);
+        }
+        #categoriesTable .category-image {
+            border: 2px solid #eaf6ff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.07);
+            transition: transform 0.2s;
+        }
+        #categoriesTable .category-image:hover {
+            transform: scale(1.08) rotate(-2deg);
+            border-color: #3498db;
+        }
+        #categoriesTable tbody tr td {
+            padding: 0.75rem 1rem;
+        }
+        #categoriesTable thead th {
+            padding: 1rem 1rem;
+        }
     </style>
 </head>
 <body>
@@ -275,7 +357,7 @@ $result = $conn->query($sql);
         <div class="container-fluid">
             <div class="row mb-4">
                 <div class="col">
-                    <h2>Category Management</h2>
+                    <div class="section-header">Category Management</div>
                 </div>
                 <div class="col text-end">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">

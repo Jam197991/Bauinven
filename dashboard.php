@@ -22,10 +22,7 @@ $best_sellers_result = $conn->query($best_sellers_sql);
 
 // Get products for selected category
 $selected_category = isset($_GET['category']) ? $_GET['category'] : null;
-$products_sql = "SELECT p.*, c.category_name, c.category_type, COALESCE(i.quantity, 0) as inventory_quantity, i.updated_at as inventory_updated_at
-                 FROM products p 
-                 JOIN categories c ON p.category_id = c.category_id
-                 LEFT JOIN inventory i ON p.product_id = i.product_id";
+$products_sql = "SELECT p.*, c.category_name, c.category_type FROM products p JOIN categories c ON p.category_id = c.category_id";
 if ($selected_category) {
     $products_sql .= " WHERE p.category_id = " . intval($selected_category);
 }
@@ -1534,7 +1531,7 @@ $products_result = $conn->query($products_sql);
                     <?php
                     if ($selected_category && $products_result->num_rows > 0) {
                         while($product = $products_result->fetch_assoc()) {
-                            $is_out_of_stock = $product['inventory_quantity'] <= 0;
+                            $is_out_of_stock = $product['quantity'] <= 0;
                             $card_class = $is_out_of_stock ? 'product-card out-of-stock' : 'product-card';
                             
                             echo '<div class="' . $card_class . '" data-product-id="' . $product['product_id'] . '">';
@@ -1553,14 +1550,14 @@ $products_result = $conn->query($products_sql);
                             echo '<p class="price">₱' . number_format($product['price'], 2) . '</p>';
                             
                             // Add inventory quantity display
-                            $quantity_class = $product['inventory_quantity'] <= 10 ? 'low-stock' : ($product['inventory_quantity'] <= 30 ? 'medium-stock' : 'high-stock');
+                            $quantity_class = $product['quantity'] <= 10 ? 'low-stock' : ($product['quantity'] <= 30 ? 'medium-stock' : 'high-stock');
                             if ($is_out_of_stock) {
                                 $quantity_class = 'out-of-stock-badge';
                             }
                             
                             echo '<div class="inventory-info">';
                             echo '<span class="stock-label">Available Stock:</span>';
-                            echo '<span class="stock-quantity ' . $quantity_class . '">' . $product['inventory_quantity'] . ' Stocks</span>';
+                            echo '<span class="stock-quantity ' . $quantity_class . '">' . $product['quantity'] . ' Stocks</span>';
                             
                             if ($is_out_of_stock) {
                                 echo '<div class="out-of-stock-message"><i class="fas fa-exclamation-triangle"></i> Out of Stock</div>';
@@ -2005,12 +2002,12 @@ $products_result = $conn->query($products_sql);
             html += `<p class="price">₱${parseFloat(product.price).toFixed(2)}</p>`;
             
             // Inventory info
-            const quantity_class = product.inventory_quantity <= 10 ? 'low-stock' : (product.inventory_quantity <= 30 ? 'medium-stock' : 'high-stock');
+            const quantity_class = product.quantity <= 10 ? 'low-stock' : (product.quantity <= 30 ? 'medium-stock' : 'high-stock');
             const final_quantity_class = is_out_of_stock ? 'out-of-stock-badge' : quantity_class;
             
             html += `<div class="inventory-info">
                 <span class="stock-label">Available Stock:</span>
-                <span class="stock-quantity ${final_quantity_class}">${product.inventory_quantity} Stocks</span>`;
+                <span class="stock-quantity ${final_quantity_class}">${product.quantity} Stocks</span>`;
             
             if (is_out_of_stock) {
                 html += `<div class="out-of-stock-message"><i class="fas fa-exclamation-triangle"></i> Out of Stock</div>`;
@@ -2284,7 +2281,7 @@ $products_result = $conn->query($products_sql);
                             <div class="search-result-category">${highlightedCategory}</div>
                         </div>
                         <div class="search-result-price">₱${parseFloat(product.price).toFixed(2)}</div>
-                        <div class="search-result-stock">${product.is_out_of_stock ? 'Out of Stock' : `${product.inventory_quantity} in stock`}</div>
+                        <div class="search-result-stock">${product.is_out_of_stock ? 'Out of Stock' : `${product.quantity} in stock`}</div>
                     </div>
                 `;
             }).join('');

@@ -21,10 +21,7 @@ try {
     
     foreach ($data['items'] as $item) {
         // Check current inventory for this product
-        $inventory_sql = "SELECT COALESCE(i.quantity, 0) as available_stock 
-                         FROM products p 
-                         LEFT JOIN inventory i ON p.product_id = i.product_id 
-                         WHERE p.product_id = ?";
+        $inventory_sql = "SELECT quantity FROM products WHERE product_id = ?";
         $stmt = $conn->prepare($inventory_sql);
         if (!$stmt) {
             throw new Exception("Error preparing inventory check: " . $conn->error);
@@ -37,7 +34,7 @@ try {
         
         $result = $stmt->get_result();
         $inventory_data = $result->fetch_assoc();
-        $available_stock = $inventory_data['available_stock'];
+        $available_stock = $inventory_data['quantity'];
         
         // Check if requested quantity exceeds available stock
         if ($item['quantity'] > $available_stock) {
@@ -103,7 +100,7 @@ try {
         }
         
         // Update inventory (reduce stock)
-        $update_inventory_sql = "UPDATE inventory SET quantity = quantity - ?, updated_at = NOW() WHERE product_id = ?";
+        $update_inventory_sql = "UPDATE products SET quantity = quantity - ?, updated_at = NOW() WHERE product_id = ?";
         $update_stmt = $conn->prepare($update_inventory_sql);
         if (!$update_stmt) {
             throw new Exception("Error preparing inventory update: " . $conn->error);

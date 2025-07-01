@@ -69,7 +69,7 @@ if (!isset($profile_image) || empty($profile_image)) {
     right: 0;
     left: 250px;
     height: 60px;
-    background: white;
+    background: linear-gradient(90deg, #4CAF50 0%, #388E3C 100%);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     display: flex;
     justify-content: space-between;
@@ -91,7 +91,7 @@ if (!isset($profile_image) || empty($profile_image)) {
 .page-title {
     font-size: 1.2rem;
     font-weight: 600;
-    color: #333;
+    color: #fff;
 }
 
 .topbar-right {
@@ -110,10 +110,11 @@ if (!isset($profile_image) || empty($profile_image)) {
     border-radius: 8px;
     transition: all 0.2s ease;
     position: relative;
+    background: rgba(255,255,255,0.05);
 }
 
 .user-profile:hover {
-    background-color: #f5f5f5;
+    background-color: #66bb6a;
 }
 
 .user-profile img {
@@ -134,7 +135,7 @@ if (!isset($profile_image) || empty($profile_image)) {
 .user-name {
     font-weight: 500;
     font-size: 14px;
-    color: #333;
+    color: #fff;
     line-height: 1.2;
 }
 
@@ -146,7 +147,7 @@ if (!isset($profile_image) || empty($profile_image)) {
 
 .dropdown-arrow {
     font-size: 12px;
-    color: #666;
+    color: #c8e6c9;
     transition: transform 0.3s ease;
 }
 
@@ -159,11 +160,11 @@ if (!isset($profile_image) || empty($profile_image)) {
     position: absolute;
     top: calc(100% + 5px);
     right: 0;
-    background-color: white;
-    border: 1px solid #ddd;
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
     border-radius: 8px;
     min-width: 220px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 16px rgba(76,175,80,0.15);
     z-index: 1000;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -190,8 +191,8 @@ if (!isset($profile_image) || empty($profile_image)) {
     align-items: center;
     gap: 12px;
     padding: 15px;
-    border-bottom: 1px solid #eee;
-    background-color: #f9f9f9;
+    border-bottom: 1px solid #c8e6c9;
+    background-color: #c8e6c9;
 }
 
 .dropdown-header img {
@@ -206,7 +207,7 @@ if (!isset($profile_image) || empty($profile_image)) {
 .dropdown-name {
     font-weight: 500;
     font-size: 14px;
-    color: #333;
+    color: #388E3C;
 }
 
 .dropdown-role {
@@ -216,7 +217,7 @@ if (!isset($profile_image) || empty($profile_image)) {
 
 .dropdown-divider {
     height: 1px;
-    background-color: #eee;
+    background-color: #a5d6a7;
     margin: 5px 0;
 }
 
@@ -225,15 +226,15 @@ if (!isset($profile_image) || empty($profile_image)) {
     align-items: center;
     gap: 10px;
     padding: 12px 16px;
-    color: #333;
+    color: #388E3C;
     text-decoration: none;
     font-size: 14px;
     transition: all 0.2s ease;
 }
 
 .dropdown-menu a:hover {
-    background-color: #f5f5f5;
-    color: #007bff;
+    background-color: #a5d6a7;
+    color: #1b5e20;
 }
 
 .dropdown-menu a i {

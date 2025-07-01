@@ -50,7 +50,7 @@ try {
     $stmt->execute();
 
     // Restore product stock
-    $update_stock_sql = "UPDATE inventory SET quantity = quantity + 1 WHERE product_id = ?";
+    $update_stock_sql = "UPDATE products SET quantity = quantity + 1 WHERE product_id = ?";
     $stmt = $conn->prepare($update_stock_sql);
     $stmt->bind_param("i", $product_id);
     $stmt->execute();

@@ -17,9 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $product_id = $_POST['product_id'];
         $quantity = $_POST['quantity'];
         
-        $sql = "INSERT INTO inventory (product_id, quantity, updated_at) VALUES (?, ?, NOW())";
+        $sql = "UPDATE products SET quantity = quantity + ?, updated_at = NOW() WHERE product_id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ii", $product_id, $quantity);
+        $stmt->bind_param("ii", $quantity, $product_id);
         if($stmt->execute()) {
             echo "<script>localStorage.setItem('message', 'Stock added successfully!');</script>";
         }
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['delete_stock'])) {
         $product_id = $_POST['product_id'];
         
-        $sql = "DELETE FROM inventory WHERE product_id = ?";
+        $sql = "UPDATE products SET quantity = 0, updated_at = NOW() WHERE product_id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $product_id);
         if($stmt->execute()) {
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $product_id = $_POST['product_id'];
         $quantity = $_POST['quantity'];
         
-        $sql = "UPDATE inventory SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
+        $sql = "UPDATE products SET quantity = ?, updated_at = NOW() WHERE product_id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ii", $quantity, $product_id);
         if($stmt->execute()) {
@@ -55,11 +55,10 @@ $HIGH_STOCK_THRESHOLD = 100;
 
 // Fetch stock data with product and category information
 $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
-          c.category_name, c.category_type, i.quantity, i.updated_at 
-          FROM inventory i 
-          JOIN products p ON i.product_id = p.product_id 
+          c.category_name, c.category_type, p.quantity, p.updated_at 
+          FROM products p
           JOIN categories c ON p.category_id = c.category_id 
-          ORDER BY i.updated_at DESC";
+          ORDER BY p.updated_at DESC";
 $result = mysqli_query($conn, $query);
 
 // Fetch products for dropdown
@@ -142,6 +141,18 @@ $products_result = mysqli_query($conn, $products_query);
             display: flex;
             gap: 5px;
         }
+        .section-header {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+            border-left: 6px solid #3498db;
+            padding-left: 16px;
+            background: #f4f8fb;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.07);
+        }
 
         /* Toastr Customization */
         #toast-container > div {
@@ -158,7 +169,7 @@ $products_result = mysqli_query($conn, $products_query);
         <div class="container-fluid">
             <div class="row mb-4">
                 <div class="col">
-                    <h2>Stock Management</h2>
+                    <div class="section-header">Stock Management</div>
                 </div>
                 <div class="col text-end">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStockModal">
